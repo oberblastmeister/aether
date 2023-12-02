@@ -1,0 +1,5 @@
+.direnv/
+runtime/zig-cache/
+runtime/zig-out/
+compiler/dist-newstyle/
+scripts/__pycache__/

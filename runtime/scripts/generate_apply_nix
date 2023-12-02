@@ -1,0 +1,6 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i python3 -p python310 python310Packages.jinja2
+# vim: ft=python
+import generate_apply
+generate_apply.main()
+
