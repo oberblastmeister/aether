@@ -33,9 +33,10 @@ main = do
       for_ ns genBoxedFnTy
       emit "pub const FnBoxedN = fn(f: *Closure, args: [*]Box) Box;"
       for_ ns genCallClosureBoxed
-      for_ ns genCallPapBoxed
+      for_ ns genApplyPapBoxed
       for_ ns genApplyClosureBoxed
       for_ ns genApplyBoxed
+      genCallM
       genCallN
       genApplyN
   runProcess_ (proc "zig" ["fmt", p])
@@ -43,6 +44,14 @@ main = do
     ns = [1 :: Int .. maxCallSize]
 
 data Rep = Boxed
+
+genCallM :: M ()
+genCallM = do
+  emit "pub inline fn call_closure_boxed_m(f: *Closure, args: [*]Box) Box"
+  braces do
+    emit $ "debug.assert(f.arity() > " <> (show maxCallSize).t <> ");"
+    emit "const code: *FnBoxedN = @ptrCast(f.code);"
+    emit "return code(f, args);"
 
 genCallN :: M ()
 genCallN = do
@@ -58,9 +67,7 @@ genCallN = do
             emit $ "args[" <> (show j).t <> "]"
         emit ";"
       branch "else" do
-        emit $ "debug.assert(f.arity() > " <> (show maxCallSize).t <> ");"
-        emit "const code: *FnBoxedN = @ptrCast(f.code);"
-        emit "return code(f, args.ptr);"
+        emit $ "return call_closure_boxed_m(f, args.ptr);"
 
 genApplyN :: M ()
 genApplyN = do
@@ -129,8 +136,11 @@ genBoxedFnTy n = do
 maxCallSize :: Int
 maxCallSize = 16
 
-genCallPapBoxed :: Int -> M ()
-genCallPapBoxed n = do
+genIndex :: Text -> Int -> Text
+genIndex t i = t <> "[" <> (show i).t <> "]"
+
+genApplyPapBoxed :: Int -> M ()
+genApplyPapBoxed n = do
   emit $ "pub fn apply_pap_boxed_" <> (show n).t
   parens do
     emit "pap: *Pap,"
@@ -141,24 +151,51 @@ genCallPapBoxed n = do
     emit "const arity = pap.arity();"
     emit "const fixed = pap.fixed();"
 
+    emit "// just right"
     emit $ "if (arity == fixed.len + " <> (show n).t <> ")"
     braces do
       emit "switch (arity)"
       braces do
         for_ [n .. maxCallSize] \i -> do
           branch (show i).t do
-            emit $ "return call_closure_boxed_" <> (show i).t
-            parens do
-              emit "closure,"
-              let fixedLen = i - n
-              unless (fixedLen == 0) do
-                for_ [0 :: Int .. fixedLen - 1] \j -> do
-                  emit $ "fixed[" <> (show j).t <> "],"
-              enumArgs "arg" n
-            emit ";"
-        -- TODO: don't panic here
-        panicBranch
+            let fixedLen = i - n
 
+            emit "const is_unique = Object.castFrom(pap).is_unique();"
+
+            emit "if (!is_unique)"
+            braces do
+              emit "@setEvalBranchQuota(2000);"
+              pure ()
+              for_ [0 :: Int .. fixedLen - 1] \fixedIx -> do
+                emit $ (genIndex "fixed" fixedIx) <> ".dup();"
+
+            stmt do
+              emit $ "const res = call_closure_boxed_" <> (show i).t
+              parens do
+                emit "closure,"
+                unless (fixedLen == 0) do
+                  for_ [0 :: Int .. fixedLen - 1] \j -> do
+                    emit $ "fixed[" <> (show j).t <> "],"
+                enumArgs "arg" n
+
+            emit "if (is_unique)"
+            braces do
+              emit "Object.castFrom(pap).free();"
+            emit "else"
+            braces do
+              emit "Object.castFrom(pap).drop();"
+
+            emit "return res;"
+        branch "else" do
+          emit "var args: [256]Box = undefined;"
+          emit "for (0..fixed.len) |i|"
+          braces do
+            emit "args[i] = fixed[i];"
+          for_ [0 :: Int .. n - 1] \i -> do
+            emit $ "args[fixed.len + " <> (show i).t <> "]" <> " = " <> "arg" <> (show i).t <> ";"
+          emit "return call_closure_boxed_m(closure, &args);"
+
+    emit "// too much"
     emit $ "else if (arity < fixed.len + " <> (show n).t <> ")"
     braces do
       emit $ "var args: [" <> (show maxCallSize).t <> "]Box = undefined;"
@@ -169,6 +206,7 @@ genCallPapBoxed n = do
       emit "const res = call_closure_boxed_n(pap.closure, args[0..arity]);"
       emit "return apply_boxed_n(res.as_object(), args[arity..]);"
 
+    emit "// too little"
     emit "else"
     braces do
       emit $ "const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + " <> (show n).t <> "));"
@@ -178,6 +216,15 @@ genCallPapBoxed n = do
       for_ [0 :: Int .. n - 1] \i -> do
         emit $ "newPap.fixed()[fixed.len + " <> (show i).t <> "] = arg" <> (show i).t <> ";"
       emit "return Object.castFrom(newPap).box();"
+
+genInlineCall :: Text -> M () -> M ()
+genInlineCall fun m = do
+  emit "@call"
+  parens do
+    emit ".always_inline,"
+    emit $ fun <> ","
+    delim ".{" "}" do
+      m
 
 genApplyBoxed :: Int -> M ()
 genApplyBoxed n = do
@@ -189,22 +236,19 @@ genApplyBoxed n = do
   braces do
     emit "switch (f.tag)"
     braces do
-      emit ".Fun =>"
-      emit $ "return apply_closure_boxed_" <> (show n).t
-      parens do
-        emit "f.cast(Closure),"
-        enumArgs "arg" n
-      emit ","
+      branch ".Fun" do
+        stmt do
+          emit "return"
+          genInlineCall ("apply_closure_boxed_" <> (show n).t) do
+            emit "f.cast(Closure),"
+            enumArgs "arg" n
 
-      emit ".Pap =>"
-      emit $ "return apply_pap_boxed_" <> (show n).t
-      parens do
-        emit "f.cast(Pap),"
-        enumArgs "arg" n
-      emit ","
-
-genApplyPapBoxed :: Int -> Text
-genApplyPapBoxed _ = ""
+      branch ".Pap" do
+        stmt do
+          emit "return"
+          genInlineCall ("apply_pap_boxed_" <> (show n).t) do
+            emit "f.cast(Pap),"
+            enumArgs "arg" n
 
 type M = Writer [Text]
 
@@ -252,7 +296,7 @@ branch t act = do
 
 genApplyClosureBoxed :: Int -> M ()
 genApplyClosureBoxed n = do
-  emit $ "pub inline fn apply_closure_boxed_" <> (show n).t
+  emit $ "pub fn apply_closure_boxed_" <> (show n).t
   parens do
     emit "f: *Closure,"
     enumParams "arg" n
@@ -265,11 +309,13 @@ genApplyClosureBoxed n = do
       emit (show n).t
       emit "== arity"
     braces do
-      emit $ "return call_closure_boxed_" <> (show n).t
-      parens do
-        emit "f,"
-        enumArgs "arg" n
-      emit ";"
+      stmt do
+        emit $ "const res = call_closure_boxed_" <> (show n).t
+        parens do
+          emit "f,"
+          enumArgs "arg" n
+      -- emit "Object.castFrom(f).drop();"
+      emit "return res;"
 
     when (n > 1) do
       emit $ "if (" <> (show n).t <> " > arity)"
@@ -278,11 +324,12 @@ genApplyClosureBoxed n = do
         braces do
           for_ [1 :: Int .. n - 1] \i -> do
             branch (show i).t do
-              emit $ "const res = call_closure_boxed_" <> (show i).t
-              parens do
-                emit "f, "
-                enumArgs "arg" i
-              emit ";"
+              stmt do
+                emit $ "const res = call_closure_boxed_" <> (show i).t
+                parens do
+                  emit "f, "
+                  enumArgs "arg" i
+              -- emit "Object.castFrom(f).drop();"
               let rest = n - i
               emit $ "return apply_boxed_" <> (show rest).t
               parens do
@@ -290,16 +337,6 @@ genApplyClosureBoxed n = do
                 enumArgsFrom "arg" i (i + rest)
               emit ";"
           panicBranch
-          -- branch "else" do
-          --   emit "var args: [256]Box = undefined;"
-          --   emit "for (0..fixed.len) |i|"
-          --   braces do
-          --     emit "args[i] = fixed[i];"
-          --   for_ [0 :: Int .. n - 1] \i -> do
-          --     emit $ "args[fixed.len + " <> (show i).t <> "]" <> " = " <> "arg" <> (show i).t <> ";"
-          --   emit $ "debug.assert(f.arity() > " <> (show maxCallSize).t <> ");"
-          --   emit "const code: *FnBoxedN = @ptrCast(f.code);"
-          --   emit "return code(f, &args);"
 
     emit $ "const pap =  Object.allocPap(f, arity," <> (show n).t <> ");"
     emit "const fixed = pap.fixed();"

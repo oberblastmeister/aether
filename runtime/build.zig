@@ -1,4 +1,5 @@
 const std = @import("std");
+const debug = std.debug;
 
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
@@ -23,7 +24,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    lib.addIncludePath(.{ .path = "headers/" });
     lib.linkLibC();
+
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
     // running `zig build`).
@@ -36,6 +39,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    main_tests.addIncludePath(.{ .path = "headers" });
     main_tests.linkLibC();
     const run_main_tests = b.addRunArtifact(main_tests);
 
@@ -44,4 +48,7 @@ pub fn build(b: *std.Build) void {
     // This will evaluate the `test` step rather than the default, which is "install".
     const test_step = b.step("test", "Run library tests");
     test_step.dependOn(&run_main_tests.step);
+
+    // const installHeader = b.addInstallFile(lib.getEmittedH(), "include");
+    // b.getInstallStep().dependOn(&installHeader.step);
 }

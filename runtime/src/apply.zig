@@ -92,59 +92,349 @@ pub fn apply_pap_boxed_1(pap: *Pap, arg0: Box) Box {
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 1) {
         switch (arity) {
             1 => {
-                return call_closure_boxed_1(closure, arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_1(closure, arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             2 => {
-                return call_closure_boxed_2(closure, fixed[0], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_2(closure, fixed[0], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             3 => {
-                return call_closure_boxed_3(closure, fixed[0], fixed[1], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_3(closure, fixed[0], fixed[1], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             4 => {
-                return call_closure_boxed_4(closure, fixed[0], fixed[1], fixed[2], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_4(closure, fixed[0], fixed[1], fixed[2], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             5 => {
-                return call_closure_boxed_5(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_5(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             6 => {
-                return call_closure_boxed_6(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_6(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             7 => {
-                return call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                    fixed[12].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], fixed[13], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                    fixed[12].dup();
+                    fixed[13].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], fixed[13], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], fixed[13], fixed[14], arg0);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                    fixed[12].dup();
+                    fixed[13].dup();
+                    fixed[14].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], fixed[13], fixed[14], arg0);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 1) {
+    }
+    // too much
+    else if (arity < fixed.len + 1) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -152,7 +442,9 @@ pub fn apply_pap_boxed_1(pap: *Pap, arg0: Box) Box {
         args[fixed.len + 0] = arg0;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 1));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -165,56 +457,322 @@ pub fn apply_pap_boxed_2(pap: *Pap, arg0: Box, arg1: Box) Box {
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 2) {
         switch (arity) {
             2 => {
-                return call_closure_boxed_2(closure, arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_2(closure, arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             3 => {
-                return call_closure_boxed_3(closure, fixed[0], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_3(closure, fixed[0], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             4 => {
-                return call_closure_boxed_4(closure, fixed[0], fixed[1], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_4(closure, fixed[0], fixed[1], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             5 => {
-                return call_closure_boxed_5(closure, fixed[0], fixed[1], fixed[2], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_5(closure, fixed[0], fixed[1], fixed[2], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             6 => {
-                return call_closure_boxed_6(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_6(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             7 => {
-                return call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                    fixed[12].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], fixed[13], arg0, arg1);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                    fixed[12].dup();
+                    fixed[13].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], fixed[13], arg0, arg1);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 2) {
+    }
+    // too much
+    else if (arity < fixed.len + 2) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -223,7 +781,9 @@ pub fn apply_pap_boxed_2(pap: *Pap, arg0: Box, arg1: Box) Box {
         args[fixed.len + 1] = arg1;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 2));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -237,53 +797,296 @@ pub fn apply_pap_boxed_3(pap: *Pap, arg0: Box, arg1: Box, arg2: Box) Box {
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 3) {
         switch (arity) {
             3 => {
-                return call_closure_boxed_3(closure, arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_3(closure, arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             4 => {
-                return call_closure_boxed_4(closure, fixed[0], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_4(closure, fixed[0], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             5 => {
-                return call_closure_boxed_5(closure, fixed[0], fixed[1], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_5(closure, fixed[0], fixed[1], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             6 => {
-                return call_closure_boxed_6(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_6(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             7 => {
-                return call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], arg0, arg1, arg2);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                    fixed[12].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], fixed[12], arg0, arg1, arg2);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 3) {
+    }
+    // too much
+    else if (arity < fixed.len + 3) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -293,7 +1096,9 @@ pub fn apply_pap_boxed_3(pap: *Pap, arg0: Box, arg1: Box, arg2: Box) Box {
         args[fixed.len + 2] = arg2;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 3));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -308,50 +1113,271 @@ pub fn apply_pap_boxed_4(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box) 
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 4) {
         switch (arity) {
             4 => {
-                return call_closure_boxed_4(closure, arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_4(closure, arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             5 => {
-                return call_closure_boxed_5(closure, fixed[0], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_5(closure, fixed[0], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             6 => {
-                return call_closure_boxed_6(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_6(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             7 => {
-                return call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_7(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0, arg1, arg2, arg3);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                    fixed[11].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], fixed[11], arg0, arg1, arg2, arg3);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 4) {
+    }
+    // too much
+    else if (arity < fixed.len + 4) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -362,7 +1388,9 @@ pub fn apply_pap_boxed_4(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box) 
         args[fixed.len + 3] = arg3;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 4));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -378,47 +1406,247 @@ pub fn apply_pap_boxed_5(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 5) {
         switch (arity) {
             5 => {
-                return call_closure_boxed_5(closure, arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_5(closure, arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             6 => {
-                return call_closure_boxed_6(closure, fixed[0], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_6(closure, fixed[0], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             7 => {
-                return call_closure_boxed_7(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_7(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1, arg2, arg3, arg4);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                    fixed[10].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], fixed[10], arg0, arg1, arg2, arg3, arg4);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 5) {
+    }
+    // too much
+    else if (arity < fixed.len + 5) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -430,7 +1658,9 @@ pub fn apply_pap_boxed_5(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
         args[fixed.len + 4] = arg4;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 5));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -447,44 +1677,224 @@ pub fn apply_pap_boxed_6(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 6) {
         switch (arity) {
             6 => {
-                return call_closure_boxed_6(closure, arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_6(closure, arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             7 => {
-                return call_closure_boxed_7(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_7(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2, arg3, arg4, arg5);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                    fixed[9].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], fixed[9], arg0, arg1, arg2, arg3, arg4, arg5);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 6) {
+    }
+    // too much
+    else if (arity < fixed.len + 6) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -497,7 +1907,9 @@ pub fn apply_pap_boxed_6(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
         args[fixed.len + 5] = arg5;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 6));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -515,41 +1927,202 @@ pub fn apply_pap_boxed_7(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 7) {
         switch (arity) {
             7 => {
-                return call_closure_boxed_7(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_7(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             8 => {
-                return call_closure_boxed_8(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_8(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                    fixed[8].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], fixed[8], arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 7) {
+    }
+    // too much
+    else if (arity < fixed.len + 7) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -563,7 +2136,9 @@ pub fn apply_pap_boxed_7(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
         args[fixed.len + 6] = arg6;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 7));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -582,38 +2157,181 @@ pub fn apply_pap_boxed_8(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 8) {
         switch (arity) {
             8 => {
-                return call_closure_boxed_8(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_8(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             9 => {
-                return call_closure_boxed_9(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_9(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                    fixed[7].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], fixed[7], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 8) {
+    }
+    // too much
+    else if (arity < fixed.len + 8) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -628,7 +2346,9 @@ pub fn apply_pap_boxed_8(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
         args[fixed.len + 7] = arg7;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 8));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -648,35 +2368,161 @@ pub fn apply_pap_boxed_9(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 9) {
         switch (arity) {
             9 => {
-                return call_closure_boxed_9(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_9(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             10 => {
-                return call_closure_boxed_10(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_10(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                    fixed[6].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], fixed[6], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 9) {
+    }
+    // too much
+    else if (arity < fixed.len + 9) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -692,7 +2538,9 @@ pub fn apply_pap_boxed_9(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box, 
         args[fixed.len + 8] = arg8;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 9));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -713,32 +2561,142 @@ pub fn apply_pap_boxed_10(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 10) {
         switch (arity) {
             10 => {
-                return call_closure_boxed_10(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_10(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             11 => {
-                return call_closure_boxed_11(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_11(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                    fixed[5].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], fixed[5], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 10) {
+    }
+    // too much
+    else if (arity < fixed.len + 10) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -755,7 +2713,9 @@ pub fn apply_pap_boxed_10(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 9] = arg9;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 10));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -777,29 +2737,124 @@ pub fn apply_pap_boxed_11(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 11) {
         switch (arity) {
             11 => {
-                return call_closure_boxed_11(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_11(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             12 => {
-                return call_closure_boxed_12(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_12(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                    fixed[4].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], fixed[4], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                args[fixed.len + 10] = arg10;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 11) {
+    }
+    // too much
+    else if (arity < fixed.len + 11) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -817,7 +2872,9 @@ pub fn apply_pap_boxed_11(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 10] = arg10;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 11));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -840,26 +2897,107 @@ pub fn apply_pap_boxed_12(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 12) {
         switch (arity) {
             12 => {
-                return call_closure_boxed_12(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_12(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             13 => {
-                return call_closure_boxed_13(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_13(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                    fixed[3].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], fixed[3], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                args[fixed.len + 10] = arg10;
+                args[fixed.len + 11] = arg11;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 12) {
+    }
+    // too much
+    else if (arity < fixed.len + 12) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -878,7 +3016,9 @@ pub fn apply_pap_boxed_12(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 11] = arg11;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 12));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -902,23 +3042,91 @@ pub fn apply_pap_boxed_13(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 13) {
         switch (arity) {
             13 => {
-                return call_closure_boxed_13(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_13(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             14 => {
-                return call_closure_boxed_14(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_14(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                    fixed[2].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], fixed[2], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                args[fixed.len + 10] = arg10;
+                args[fixed.len + 11] = arg11;
+                args[fixed.len + 12] = arg12;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 13) {
+    }
+    // too much
+    else if (arity < fixed.len + 13) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -938,7 +3146,9 @@ pub fn apply_pap_boxed_13(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 12] = arg12;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 13));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -963,20 +3173,76 @@ pub fn apply_pap_boxed_14(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 14) {
         switch (arity) {
             14 => {
-                return call_closure_boxed_14(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_14(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             15 => {
-                return call_closure_boxed_15(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_15(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                    fixed[1].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], fixed[1], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                args[fixed.len + 10] = arg10;
+                args[fixed.len + 11] = arg11;
+                args[fixed.len + 12] = arg12;
+                args[fixed.len + 13] = arg13;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 14) {
+    }
+    // too much
+    else if (arity < fixed.len + 14) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -997,7 +3263,9 @@ pub fn apply_pap_boxed_14(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 13] = arg13;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 14));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -1023,17 +3291,62 @@ pub fn apply_pap_boxed_15(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 15) {
         switch (arity) {
             15 => {
-                return call_closure_boxed_15(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_15(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
             16 => {
-                return call_closure_boxed_16(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                    fixed[0].dup();
+                }
+                const res = call_closure_boxed_16(closure, fixed[0], arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                args[fixed.len + 10] = arg10;
+                args[fixed.len + 11] = arg11;
+                args[fixed.len + 12] = arg12;
+                args[fixed.len + 13] = arg13;
+                args[fixed.len + 14] = arg14;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 15) {
+    }
+    // too much
+    else if (arity < fixed.len + 15) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -1055,7 +3368,9 @@ pub fn apply_pap_boxed_15(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 14] = arg14;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 15));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -1082,14 +3397,49 @@ pub fn apply_pap_boxed_16(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
     const closure = pap.closure;
     const arity = pap.arity();
     const fixed = pap.fixed();
+    // just right
     if (arity == fixed.len + 16) {
         switch (arity) {
             16 => {
-                return call_closure_boxed_16(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                const is_unique = Object.castFrom(pap).is_unique();
+                if (!is_unique) {
+                    @setEvalBranchQuota(2000);
+                }
+                const res = call_closure_boxed_16(closure, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                if (is_unique) {
+                    Object.castFrom(pap).free();
+                } else {
+                    Object.castFrom(pap).drop();
+                }
+                return res;
             },
-            else => @panic("unhandled branch"),
+            else => {
+                var args: [256]Box = undefined;
+                for (0..fixed.len) |i| {
+                    args[i] = fixed[i];
+                }
+                args[fixed.len + 0] = arg0;
+                args[fixed.len + 1] = arg1;
+                args[fixed.len + 2] = arg2;
+                args[fixed.len + 3] = arg3;
+                args[fixed.len + 4] = arg4;
+                args[fixed.len + 5] = arg5;
+                args[fixed.len + 6] = arg6;
+                args[fixed.len + 7] = arg7;
+                args[fixed.len + 8] = arg8;
+                args[fixed.len + 9] = arg9;
+                args[fixed.len + 10] = arg10;
+                args[fixed.len + 11] = arg11;
+                args[fixed.len + 12] = arg12;
+                args[fixed.len + 13] = arg13;
+                args[fixed.len + 14] = arg14;
+                args[fixed.len + 15] = arg15;
+                return call_closure_boxed_m(closure, &args);
+            },
         }
-    } else if (arity < fixed.len + 16) {
+    }
+    // too much
+    else if (arity < fixed.len + 16) {
         var args: [16]Box = undefined;
         for (0..fixed.len) |i| {
             args[i] = fixed[i];
@@ -1112,7 +3462,9 @@ pub fn apply_pap_boxed_16(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         args[fixed.len + 15] = arg15;
         const res = call_closure_boxed_n(pap.closure, args[0..arity]);
         return apply_boxed_n(res.as_object(), args[arity..]);
-    } else {
+    }
+    // too little
+    else {
         const newPap = Object.allocPap(pap.closure, arity, @intCast(fixed.len + 16));
         for (0..fixed.len) |i| {
             newPap.fixed()[i] = fixed[i];
@@ -1136,20 +3488,22 @@ pub fn apply_pap_boxed_16(pap: *Pap, arg0: Box, arg1: Box, arg2: Box, arg3: Box,
         return Object.castFrom(newPap).box();
     }
 }
-pub inline fn apply_closure_boxed_1(f: *Closure, arg0: Box) Box {
+pub fn apply_closure_boxed_1(f: *Closure, arg0: Box) Box {
     const arity = f.arity();
     if (1 == arity) {
-        return call_closure_boxed_1(f, arg0);
+        const res = call_closure_boxed_1(f, arg0);
+        return res;
     }
     const pap = Object.allocPap(f, arity, 1);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_2(f: *Closure, arg0: Box, arg1: Box) Box {
+pub fn apply_closure_boxed_2(f: *Closure, arg0: Box, arg1: Box) Box {
     const arity = f.arity();
     if (2 == arity) {
-        return call_closure_boxed_2(f, arg0, arg1);
+        const res = call_closure_boxed_2(f, arg0, arg1);
+        return res;
     }
     if (2 > arity) {
         switch (arity) {
@@ -1166,10 +3520,11 @@ pub inline fn apply_closure_boxed_2(f: *Closure, arg0: Box, arg1: Box) Box {
     fixed[1] = arg1;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_3(f: *Closure, arg0: Box, arg1: Box, arg2: Box) Box {
+pub fn apply_closure_boxed_3(f: *Closure, arg0: Box, arg1: Box, arg2: Box) Box {
     const arity = f.arity();
     if (3 == arity) {
-        return call_closure_boxed_3(f, arg0, arg1, arg2);
+        const res = call_closure_boxed_3(f, arg0, arg1, arg2);
+        return res;
     }
     if (3 > arity) {
         switch (arity) {
@@ -1191,10 +3546,11 @@ pub inline fn apply_closure_boxed_3(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[2] = arg2;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_4(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box) Box {
+pub fn apply_closure_boxed_4(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box) Box {
     const arity = f.arity();
     if (4 == arity) {
-        return call_closure_boxed_4(f, arg0, arg1, arg2, arg3);
+        const res = call_closure_boxed_4(f, arg0, arg1, arg2, arg3);
+        return res;
     }
     if (4 > arity) {
         switch (arity) {
@@ -1221,10 +3577,11 @@ pub inline fn apply_closure_boxed_4(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[3] = arg3;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_5(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box) Box {
+pub fn apply_closure_boxed_5(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box) Box {
     const arity = f.arity();
     if (5 == arity) {
-        return call_closure_boxed_5(f, arg0, arg1, arg2, arg3, arg4);
+        const res = call_closure_boxed_5(f, arg0, arg1, arg2, arg3, arg4);
+        return res;
     }
     if (5 > arity) {
         switch (arity) {
@@ -1256,10 +3613,11 @@ pub inline fn apply_closure_boxed_5(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[4] = arg4;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_6(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box) Box {
+pub fn apply_closure_boxed_6(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box) Box {
     const arity = f.arity();
     if (6 == arity) {
-        return call_closure_boxed_6(f, arg0, arg1, arg2, arg3, arg4, arg5);
+        const res = call_closure_boxed_6(f, arg0, arg1, arg2, arg3, arg4, arg5);
+        return res;
     }
     if (6 > arity) {
         switch (arity) {
@@ -1296,10 +3654,11 @@ pub inline fn apply_closure_boxed_6(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[5] = arg5;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_7(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box) Box {
+pub fn apply_closure_boxed_7(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box) Box {
     const arity = f.arity();
     if (7 == arity) {
-        return call_closure_boxed_7(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+        const res = call_closure_boxed_7(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
+        return res;
     }
     if (7 > arity) {
         switch (arity) {
@@ -1341,10 +3700,11 @@ pub inline fn apply_closure_boxed_7(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[6] = arg6;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_8(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box) Box {
+pub fn apply_closure_boxed_8(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box) Box {
     const arity = f.arity();
     if (8 == arity) {
-        return call_closure_boxed_8(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        const res = call_closure_boxed_8(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        return res;
     }
     if (8 > arity) {
         switch (arity) {
@@ -1391,10 +3751,11 @@ pub inline fn apply_closure_boxed_8(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[7] = arg7;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_9(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box) Box {
+pub fn apply_closure_boxed_9(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box) Box {
     const arity = f.arity();
     if (9 == arity) {
-        return call_closure_boxed_9(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        const res = call_closure_boxed_9(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        return res;
     }
     if (9 > arity) {
         switch (arity) {
@@ -1446,10 +3807,11 @@ pub inline fn apply_closure_boxed_9(f: *Closure, arg0: Box, arg1: Box, arg2: Box
     fixed[8] = arg8;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_10(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box) Box {
+pub fn apply_closure_boxed_10(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box) Box {
     const arity = f.arity();
     if (10 == arity) {
-        return call_closure_boxed_10(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+        const res = call_closure_boxed_10(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+        return res;
     }
     if (10 > arity) {
         switch (arity) {
@@ -1506,10 +3868,11 @@ pub inline fn apply_closure_boxed_10(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
     fixed[9] = arg9;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_11(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box) Box {
+pub fn apply_closure_boxed_11(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box) Box {
     const arity = f.arity();
     if (11 == arity) {
-        return call_closure_boxed_11(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+        const res = call_closure_boxed_11(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+        return res;
     }
     if (11 > arity) {
         switch (arity) {
@@ -1571,10 +3934,11 @@ pub inline fn apply_closure_boxed_11(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
     fixed[10] = arg10;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_12(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box) Box {
+pub fn apply_closure_boxed_12(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box) Box {
     const arity = f.arity();
     if (12 == arity) {
-        return call_closure_boxed_12(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+        const res = call_closure_boxed_12(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+        return res;
     }
     if (12 > arity) {
         switch (arity) {
@@ -1641,10 +4005,11 @@ pub inline fn apply_closure_boxed_12(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
     fixed[11] = arg11;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_13(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box) Box {
+pub fn apply_closure_boxed_13(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box) Box {
     const arity = f.arity();
     if (13 == arity) {
-        return call_closure_boxed_13(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+        const res = call_closure_boxed_13(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
+        return res;
     }
     if (13 > arity) {
         switch (arity) {
@@ -1716,10 +4081,11 @@ pub inline fn apply_closure_boxed_13(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
     fixed[12] = arg12;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_14(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box) Box {
+pub fn apply_closure_boxed_14(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box) Box {
     const arity = f.arity();
     if (14 == arity) {
-        return call_closure_boxed_14(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+        const res = call_closure_boxed_14(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+        return res;
     }
     if (14 > arity) {
         switch (arity) {
@@ -1796,10 +4162,11 @@ pub inline fn apply_closure_boxed_14(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
     fixed[13] = arg13;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_15(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box, arg14: Box) Box {
+pub fn apply_closure_boxed_15(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box, arg14: Box) Box {
     const arity = f.arity();
     if (15 == arity) {
-        return call_closure_boxed_15(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+        const res = call_closure_boxed_15(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+        return res;
     }
     if (15 > arity) {
         switch (arity) {
@@ -1881,10 +4248,11 @@ pub inline fn apply_closure_boxed_15(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
     fixed[14] = arg14;
     return Object.castFrom(pap).box();
 }
-pub inline fn apply_closure_boxed_16(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box, arg14: Box, arg15: Box) Box {
+pub fn apply_closure_boxed_16(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box, arg14: Box, arg15: Box) Box {
     const arity = f.arity();
     if (16 == arity) {
-        return call_closure_boxed_16(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+        const res = call_closure_boxed_16(f, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+        return res;
     }
     if (16 > arity) {
         switch (arity) {
@@ -1973,99 +4341,168 @@ pub inline fn apply_closure_boxed_16(f: *Closure, arg0: Box, arg1: Box, arg2: Bo
 }
 pub fn apply_boxed_1(f: *Object, arg0: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_1(f.cast(Closure), arg0),
-        .Pap => return apply_pap_boxed_1(f.cast(Pap), arg0),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_1, .{ f.cast(Closure), arg0 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_1, .{ f.cast(Pap), arg0 });
+        },
     }
 }
 pub fn apply_boxed_2(f: *Object, arg0: Box, arg1: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_2(f.cast(Closure), arg0, arg1),
-        .Pap => return apply_pap_boxed_2(f.cast(Pap), arg0, arg1),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_2, .{ f.cast(Closure), arg0, arg1 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_2, .{ f.cast(Pap), arg0, arg1 });
+        },
     }
 }
 pub fn apply_boxed_3(f: *Object, arg0: Box, arg1: Box, arg2: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_3(f.cast(Closure), arg0, arg1, arg2),
-        .Pap => return apply_pap_boxed_3(f.cast(Pap), arg0, arg1, arg2),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_3, .{ f.cast(Closure), arg0, arg1, arg2 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_3, .{ f.cast(Pap), arg0, arg1, arg2 });
+        },
     }
 }
 pub fn apply_boxed_4(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_4(f.cast(Closure), arg0, arg1, arg2, arg3),
-        .Pap => return apply_pap_boxed_4(f.cast(Pap), arg0, arg1, arg2, arg3),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_4, .{ f.cast(Closure), arg0, arg1, arg2, arg3 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_4, .{ f.cast(Pap), arg0, arg1, arg2, arg3 });
+        },
     }
 }
 pub fn apply_boxed_5(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_5(f.cast(Closure), arg0, arg1, arg2, arg3, arg4),
-        .Pap => return apply_pap_boxed_5(f.cast(Pap), arg0, arg1, arg2, arg3, arg4),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_5, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_5, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4 });
+        },
     }
 }
 pub fn apply_boxed_6(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_6(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5),
-        .Pap => return apply_pap_boxed_6(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_6, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_6, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5 });
+        },
     }
 }
 pub fn apply_boxed_7(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_7(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6),
-        .Pap => return apply_pap_boxed_7(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_7, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_7, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6 });
+        },
     }
 }
 pub fn apply_boxed_8(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_8(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7),
-        .Pap => return apply_pap_boxed_8(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_8, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_8, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 });
+        },
     }
 }
 pub fn apply_boxed_9(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_9(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8),
-        .Pap => return apply_pap_boxed_9(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_9, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_9, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 });
+        },
     }
 }
 pub fn apply_boxed_10(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_10(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9),
-        .Pap => return apply_pap_boxed_10(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_10, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_10, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 });
+        },
     }
 }
 pub fn apply_boxed_11(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_11(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10),
-        .Pap => return apply_pap_boxed_11(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_11, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_11, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10 });
+        },
     }
 }
 pub fn apply_boxed_12(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_12(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11),
-        .Pap => return apply_pap_boxed_12(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_12, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_12, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11 });
+        },
     }
 }
 pub fn apply_boxed_13(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_13(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12),
-        .Pap => return apply_pap_boxed_13(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_13, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_13, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12 });
+        },
     }
 }
 pub fn apply_boxed_14(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_14(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13),
-        .Pap => return apply_pap_boxed_14(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_14, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_14, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13 });
+        },
     }
 }
 pub fn apply_boxed_15(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box, arg14: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_15(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14),
-        .Pap => return apply_pap_boxed_15(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_15, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_15, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14 });
+        },
     }
 }
 pub fn apply_boxed_16(f: *Object, arg0: Box, arg1: Box, arg2: Box, arg3: Box, arg4: Box, arg5: Box, arg6: Box, arg7: Box, arg8: Box, arg9: Box, arg10: Box, arg11: Box, arg12: Box, arg13: Box, arg14: Box, arg15: Box) Box {
     switch (f.tag) {
-        .Fun => return apply_closure_boxed_16(f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15),
-        .Pap => return apply_pap_boxed_16(f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15),
+        .Fun => {
+            return @call(.always_inline, apply_closure_boxed_16, .{ f.cast(Closure), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15 });
+        },
+        .Pap => {
+            return @call(.always_inline, apply_pap_boxed_16, .{ f.cast(Pap), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15 });
+        },
     }
+}
+pub inline fn call_closure_boxed_m(f: *Closure, args: [*]Box) Box {
+    debug.assert(f.arity() > 16);
+    const code: *FnBoxedN = @ptrCast(f.code);
+    return code(f, args);
 }
 pub fn call_closure_boxed_n(f: *Closure, args: []Box) Box {
     switch (args.len) {
@@ -2118,9 +4555,7 @@ pub fn call_closure_boxed_n(f: *Closure, args: []Box) Box {
             return call_closure_boxed_16(f, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
         },
         else => {
-            debug.assert(f.arity() > 16);
-            const code: *FnBoxedN = @ptrCast(f.code);
-            return code(f, args.ptr);
+            return call_closure_boxed_m(f, args.ptr);
         },
     }
 }
