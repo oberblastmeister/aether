@@ -338,7 +338,7 @@ genApplyClosureBoxed n = do
               emit ";"
           panicBranch
 
-    emit $ "const pap =  Object.allocPap(f, arity," <> (show n).t <> ");"
+    emit $ "const pap =  Object.alloc_pap(f, arity," <> (show n).t <> ");"
     emit "const fixed = pap.fixed();"
     for_ [0 :: Int .. n - 1] \i -> do
       emit $ "fixed[" <> (show i).t <> "] = arg" <> (show i).t <> ";"

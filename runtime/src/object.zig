@@ -1,3 +1,5 @@
+// runtime object api
+
 const std = @import("std");
 const meta = std.meta;
 const mem = std.mem;
@@ -6,6 +8,10 @@ const atomic = std.atomic;
 const debug = std.debug;
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
+
+pub export fn ae_panic(s: [*:0]u8) void {
+    debug.panic("{s}", .{s});
+}
 
 pub const Tag = enum(u8) {
     Fun,
@@ -184,13 +190,13 @@ pub const Object = extern struct {
         return @ptrCast(p);
     }
 
-    pub fn allocClosure(env_size: u8, arity: u8) *Closure {
+    pub export fn allocClosure(env_size: u8, arity: u8) *Closure {
         const h = Object.alloc(Closure, env_size);
-        h.other = arity;
+        h.header.other = arity;
         return h;
     }
 
-    pub fn allocPap(closure: *Closure, arity: u8, fixed: u8) *Pap {
+    pub fn alloc_pap(closure: *Closure, arity: u8, fixed: u8) *Pap {
         const o = Object.alloc(Pap, fixed);
         o.closure = closure;
         o.header.other = arity;
@@ -238,6 +244,11 @@ pub const Value = usize;
 
 pub const Box = extern struct {
     box: *anyopaque,
+
+    pub export fn box_fun(self: Box) bool {
+        _ = self;
+        return true;
+    }
 
     pub inline fn is_value(self: Box) bool {
         return @intFromPtr(self.box) & 1 == 1;

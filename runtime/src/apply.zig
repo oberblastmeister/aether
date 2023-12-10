@@ -3494,7 +3494,7 @@ pub fn apply_closure_boxed_1(f: *Closure, arg0: Box) Box {
         const res = call_closure_boxed_1(f, arg0);
         return res;
     }
-    const pap = Object.allocPap(f, arity, 1);
+    const pap = Object.alloc_pap(f, arity, 1);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     return Object.castFrom(pap).box();
@@ -3514,7 +3514,7 @@ pub fn apply_closure_boxed_2(f: *Closure, arg0: Box, arg1: Box) Box {
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 2);
+    const pap = Object.alloc_pap(f, arity, 2);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3539,7 +3539,7 @@ pub fn apply_closure_boxed_3(f: *Closure, arg0: Box, arg1: Box, arg2: Box) Box {
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 3);
+    const pap = Object.alloc_pap(f, arity, 3);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3569,7 +3569,7 @@ pub fn apply_closure_boxed_4(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3:
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 4);
+    const pap = Object.alloc_pap(f, arity, 4);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3604,7 +3604,7 @@ pub fn apply_closure_boxed_5(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3:
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 5);
+    const pap = Object.alloc_pap(f, arity, 5);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3644,7 +3644,7 @@ pub fn apply_closure_boxed_6(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3:
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 6);
+    const pap = Object.alloc_pap(f, arity, 6);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3689,7 +3689,7 @@ pub fn apply_closure_boxed_7(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3:
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 7);
+    const pap = Object.alloc_pap(f, arity, 7);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3739,7 +3739,7 @@ pub fn apply_closure_boxed_8(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3:
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 8);
+    const pap = Object.alloc_pap(f, arity, 8);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3794,7 +3794,7 @@ pub fn apply_closure_boxed_9(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3:
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 9);
+    const pap = Object.alloc_pap(f, arity, 9);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3854,7 +3854,7 @@ pub fn apply_closure_boxed_10(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 10);
+    const pap = Object.alloc_pap(f, arity, 10);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3919,7 +3919,7 @@ pub fn apply_closure_boxed_11(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 11);
+    const pap = Object.alloc_pap(f, arity, 11);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -3989,7 +3989,7 @@ pub fn apply_closure_boxed_12(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 12);
+    const pap = Object.alloc_pap(f, arity, 12);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -4064,7 +4064,7 @@ pub fn apply_closure_boxed_13(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 13);
+    const pap = Object.alloc_pap(f, arity, 13);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -4144,7 +4144,7 @@ pub fn apply_closure_boxed_14(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 14);
+    const pap = Object.alloc_pap(f, arity, 14);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -4229,7 +4229,7 @@ pub fn apply_closure_boxed_15(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 15);
+    const pap = Object.alloc_pap(f, arity, 15);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;
@@ -4319,7 +4319,7 @@ pub fn apply_closure_boxed_16(f: *Closure, arg0: Box, arg1: Box, arg2: Box, arg3
             else => @panic("unhandled branch"),
         }
     }
-    const pap = Object.allocPap(f, arity, 16);
+    const pap = Object.alloc_pap(f, arity, 16);
     const fixed = pap.fixed();
     fixed[0] = arg0;
     fixed[1] = arg1;

@@ -79,6 +79,7 @@ common common-flags
     DeriveLift,
     DeriveTraversable ,
     GeneralizedNewtypeDeriving,
+    BlockArguments,
     GADTs,
     PolyKinds,
     ViewPatterns,
@@ -104,6 +105,7 @@ common common-flags
     text >= 2.0,
     hashable,
     filepath >= 1.4.100.4,
+    temporary,
     directory,
     bytestring,
     mtl,
@@ -114,7 +116,9 @@ common common-flags
     prettyprinter,
     vector,
     megaparsec,
+    parser-combinators,
     typed-process,
+    scientific,
 
 library
   -- Import common warning flags.
@@ -124,6 +128,12 @@ library
   -- Modules exported by the library.
   exposed-modules:
     Dot
+    Cp
+    Cp.Check
+    Cp.Parser
+    Cp.Syntax
+    Cp.Driver
+    Cp.Backend.C
 
   -- Modules included in this library but not exported.
   -- other-modules:
@@ -185,4 +195,7 @@ test-suite compiler-test
     main-is:          Main.hs
 
     -- Test dependencies.
-    build-depends: compiler
+    build-depends:
+      compiler,
+      tasty,
+      tasty-hunit,
