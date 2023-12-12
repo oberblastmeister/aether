@@ -1,3 +1,4 @@
+{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
@@ -12,12 +13,10 @@ import Cp.Syntax
 import Data.Char qualified as Char
 import Data.Foldable (foldl')
 import Data.Functor (($>))
-import Data.Scientific qualified as Scientific
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Void (Void)
 import Debug.Trace (traceM)
-import Dot ()
+import Imports hiding (noneOf)
 import Text.Megaparsec hiding (parse)
 import Text.Megaparsec qualified as P
 import Text.Megaparsec.Char qualified as C
@@ -216,13 +215,15 @@ pIfCont =
         pKeyword "if"
       cond <- pExpr
       body <- pBody
-      pure ElseIf {cond, body}
+      cont <- pIfCont
+      pure ElseIf {cond, body, cont}
   )
     <|> ( do
             pKeyword "else"
             body <- pBody
             pure Else {body}
         )
+    <|> (pure NoIfCont)
 
 pIf :: Parser (Stmt Parsed)
 pIf = do
@@ -389,9 +390,9 @@ parseFull p s = P.parse (contents p) "<stdin>" s
 showError :: (ParseErrorBundle Text CustomError) -> String
 showError e = errorBundlePretty e
 
-pProgram :: Parser (Program Parsed)
+pProgram :: Parser (ProgramParsed)
 pProgram = dbg "program" do
-  Program <$> many pDecl
+  ProgramParsed <$> many pDecl
 
-parse :: Text -> Either (ParseErrorBundle Text CustomError) (Program Parsed)
+parse :: Text -> Either (ParseErrorBundle Text CustomError) (ProgramParsed)
 parse t = parseFull pProgram t

@@ -12,10 +12,10 @@ import Data.Hashable (Hashable)
 import Data.Kind (Constraint)
 import Data.Kind qualified as Kind
 import Data.Text (Text)
-import Dot ()
+import Imports
 import GHC.Generics (Generic)
-import Prelude hiding (Num)
 import Optics
+import Prelude hiding (Num)
 
 data SourcePos = SourcePos Int
   deriving (Show, Eq)
@@ -66,38 +66,60 @@ data PlaceContext
 
 type data Phase = Parsed | Typed
 
+type BuiltinArgs p = [Either Type (Expr p)]
+
+focusBuiltinArgs :: Optic A_Traversal '[Int] (BuiltinArgs p) (BuiltinArgs q) (Expr p) (Expr q)
+focusBuiltinArgs = each % _Right
+
 data BuiltinParsed = BuiltinParsed
   { name :: Text,
-    args :: [Either Type (Expr Parsed)]
+    args :: BuiltinArgs Parsed
   }
   deriving (Show, Eq)
 
 data CompareType = CompareInt IntType | CompareBool
   deriving (Show, Eq)
 
-data BuiltinTyped
-  = Eq (Expr Typed) (Expr Typed)
-  | Lt (Expr Typed) (Expr Typed)
-  | Le (Expr Typed) (Expr Typed)
-  | Gt (Expr Typed) (Expr Typed)
-  | Ge (Expr Typed) (Expr Typed)
-  | Add (Expr Typed) (Expr Typed)
-  | Mul (Expr Typed) (Expr Typed)
-  | Sub (Expr Typed) (Expr Typed)
-  | AddOverflow (Expr Typed) (Expr Typed)
-  | MulOverflow (Expr Typed) (Expr Typed)
-  | SubOverflow (Expr Typed) (Expr Typed)
-  | And (Expr Typed) (Expr Typed)
-  | Or (Expr Typed) (Expr Typed)
-  | Not (Expr Typed)
-  | Shl Bool (Expr Typed) (Expr Typed)
-  | Shr Bool (Expr Typed) (Expr Typed)
-  | BitNot (Expr Typed)
-  | BitOr (Expr Typed) (Expr Typed)
-  | BitAnd (Expr Typed) (Expr Typed)
-  | Cast Type (Expr Typed)
-  | As Type (Expr Typed)
+data BinBuiltin p = BinBuiltin Type (Expr p) (Expr p)
+
+deriving instance (PhaseC Show p) => Show (BinBuiltin p)
+
+deriving instance (PhaseC Eq p) => Eq (BinBuiltin p)
+
+data UnaryBuiltin p = UnaryBuiltin Type (Expr p)
+
+deriving instance (PhaseC Show p) => Show (UnaryBuiltin p)
+
+deriving instance (PhaseC Eq p) => Eq (UnaryBuiltin p)
+
+data BuiltinTag
+  = Eq
+  | Lt
+  | Le
+  | Gt
+  | Ge
+  | Add
+  | Mul
+  | Sub
+  | AddOverflow
+  | MulOverflow
+  | SubOverflow
+  | And
+  | Or
+  | Not
+  | Shl
+  | Shr
+  | BitNot
+  | BitOr
+  | BitAnd
+  deriving (Show, Eq, Enum, Bounded)
+
+data BuiltinTyped = SomeBuiltin BuiltinTag (BuiltinArgs Typed)
   deriving (Show, Eq)
+
+-- deriving instance (PhaseC Show p) => Show (BuiltinTyped p)
+
+-- deriving instance (PhaseC Eq p) => Eq (BuiltinTyped p)
 
 type family BuiltinPhase p where
   BuiltinPhase Parsed = BuiltinParsed
@@ -135,6 +157,7 @@ data Expr p
   = Call (CallVar p) [Expr p]
   | Builtin (BuiltinPhase p)
   | SpannedExpr (Expr p) SourcePos
+  | As Type (Expr p)
   | Null
   | PlaceExpr (Place p)
   | Ref (Expr p)
@@ -186,9 +209,11 @@ data Type
 data IfCont p
   = ElseIf
       { cond :: (Expr p),
-        body :: [Stmt p]
+        body :: [Stmt p],
+        cont :: (IfCont p)
       }
   | Else {body :: [Stmt p]}
+  | NoIfCont
 
 deriving instance (PhaseC Show p) => Show (IfCont p)
 
@@ -230,10 +255,6 @@ data FnType = FnType
   }
   deriving (Show, Eq)
 
--- deriving instance (PhaseC Show p) => Show (FnType )
-
--- deriving instance (PhaseC Eq p) => Eq (FnType )
-
 data FnInfo p = FnInfo
   { fnType :: FnType,
     params :: [Var p],
@@ -255,12 +276,23 @@ deriving instance (PhaseC Show p) => Show (Decl p)
 
 deriving instance (PhaseC Eq p) => Eq (Decl p)
 
-data Program p = Program
-  { decls :: [Decl p]
+data ProgramParsed = ProgramParsed
+  { decls :: [Decl Parsed]
   }
+  deriving (Show, Eq)
 
-deriving instance (PhaseC Show p) => Show (Program p)
+data ProgramInfo = ProgramInfo
+  { structs :: HashMap Text (StructInfo),
+    enums :: HashMap Text (EnumInfo),
+    unions :: HashMap Text (UnionInfo),
+    fns :: HashMap Text FnType
+  }
+  deriving (Show, Eq)
 
-deriving instance (PhaseC Eq p) => Eq (Program p)
+data ProgramTyped = ProgramTyped
+  { info :: ProgramInfo,
+    decls :: [Decl Typed]
+  }
+  deriving (Show, Eq)
 
 makeFieldLabelsNoPrefix ''StructInfo

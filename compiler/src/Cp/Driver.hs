@@ -4,19 +4,22 @@ import Cp.Backend.C qualified as Backend.C
 import Cp.Check qualified as Check
 import Cp.Parser qualified as Parser
 import Data.Text.IO qualified as T
+import System.Directory qualified as Directory
 import System.FilePath
-import System.FilePath qualified as FilePath
-import System.IO qualified as IO
-import System.IO.Temp qualified as Temp
 import System.Process.Typed qualified as Process
 
-compileCFile :: FilePath -> FilePath -> IO ()
-compileCFile fp executable = do
-  Process.runProcess_ (Process.proc "zig" ["build-obj", "test_runtime.zig", "-lc"])
-  Process.runProcess_ (Process.proc "zig" ["cc", "-std=c17", fp, "test_runtime.o", "-g", "-o", executable])
+compileCFile :: FilePath -> FilePath -> [FilePath] -> IO ()
+compileCFile fp executable link = do
+  Process.runProcess_ (Process.proc "zig" $ ["cc", "-std=c17", fp, "-g", "-o", executable] ++ link)
 
-run :: FilePath -> IO ()
-run path = do
+data RunOptions = RunOptions
+  { dir :: FilePath,
+    path :: FilePath,
+    runtime :: FilePath
+  }
+
+run :: FilePath -> FilePath -> [FilePath] -> IO ()
+run dir path link = do
   contents <- T.readFile path
   let syntax = Parser.parse contents
   case syntax of
@@ -26,16 +29,14 @@ run path = do
       putStrLn "checking"
       case Check.checkProgram syntax of
         Left e -> putStrLn $ show e
-        Right (program, info) -> do
-          let cOutput = Backend.C.genProgram info False program
+        Right program -> do
+          let buildDir = dir </> "_build"
+          Directory.createDirectoryIfMissing False buildDir
+          let cOutput = Backend.C.genProgram False program
           T.putStrLn $ "output:\n".t <> cOutput
-          let cFile = path -<.> ".c"
-          let exeFile = dropExtension path
+          let name = takeFileName path
+          let cFile = buildDir </> name -<.> ".c"
           T.writeFile cFile cOutput
-          compileCFile cFile exeFile
+          let exeFile = buildDir </> name -<.> ""
+          compileCFile cFile exeFile link
           Process.runProcess_ (Process.proc exeFile [])
-
--- Temp.withSystemTempFile "compile.c" \tempFp tempH -> do
---   T.hPutStr tempH cOutput
---   IO.hFlush tempH
---   IO.hClose tempH

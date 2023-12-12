@@ -91,6 +91,7 @@ common common-flags
     NoFieldSelectors,
     OverloadedLabels,
     OverloadedRecordDot,
+    StrictData,
   default-language: GHC2021
   ghc-options:
     -Wall
@@ -100,6 +101,7 @@ common common-flags
     -Werror=incomplete-patterns
     -Werror=incomplete-uni-patterns
     -Werror=missing-methods
+    -Wno-missing-signatures
   build-depends: 
     base >= 4.17,
     text >= 2.0,
@@ -119,15 +121,14 @@ common common-flags
     parser-combinators,
     typed-process,
     scientific,
+    text-builder-linear,
 
 library
-  -- Import common warning flags.
-  import:
-    common-flags
+  import: common-flags
 
-  -- Modules exported by the library.
   exposed-modules:
-    Dot
+    Imports
+    Imports.Dot
     Cp
     Cp.Check
     Cp.Parser
@@ -135,16 +136,6 @@ library
     Cp.Driver
     Cp.Backend.C
 
-  -- Modules included in this library but not exported.
-  -- other-modules:
-
-  -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:
-
-  -- Other library packages from which modules are imported.
-  -- build-depends:    base ^>=4.16.4.0
-
-  -- Directories containing source files.
   hs-source-dirs:   src
 
   -- Base language which the package is written in.

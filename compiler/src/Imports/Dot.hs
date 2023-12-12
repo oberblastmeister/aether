@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Dot where
+module Imports.Dot where
 
 import Control.Exception qualified as Exception
 import Data.ByteString (ByteString)
@@ -12,6 +12,7 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Builder.Linear qualified as TB
 import Data.Text.Encoding qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Vector qualified as VB
@@ -20,6 +21,14 @@ import GHC.Records
 import Prettyprinter qualified as Pr
 import System.OsPath
 import System.OsPath qualified as P
+
+instance HasField "tb" String TB.Builder where
+  getField = TB.fromText . T.pack
+  {-# INLINE getField #-}
+
+instance HasField "tb" Text TB.Builder where
+  getField = TB.fromText
+  {-# INLINE getField #-}
 
 instance HasField "pr" Text (Pr.Doc Void) where
   getField = Pr.pretty

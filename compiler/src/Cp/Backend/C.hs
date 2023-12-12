@@ -13,13 +13,11 @@ import Control.Monad.State.Strict
 import Cp.Check
 import Cp.Syntax
 import Data.Foldable (for_)
-import Data.Functor
+import Imports
 import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Lazy qualified as TL
-import Optics
-import Optics.State.Operators
+import Data.Text.Builder.Linear qualified as TB
 
 -- import Prettyprinter hiding (Doc)
 -- import Prettyprinter qualified as P
@@ -57,31 +55,50 @@ emitLn t = do
   emit t
   emit $ T.singleton '\n'
 
-genProgram :: ProgramInfo -> Bool -> Program Typed -> Text
-genProgram info whitespace program = T.concat $ reverse st.out
+genProgram :: Bool -> ProgramTyped -> Text
+genProgram whitespace program = T.concat $ reverse st.out
   where
-    ((), st) = runState (runReaderT (genProgram' program) (mkGenEnv info whitespace)) mkGenState
+    ((), st) =
+      runState
+        ( runReaderT
+            (genDecls program.decls)
+            (mkGenEnv program.info whitespace)
+        )
+        mkGenState
 
--- freshName :: M Text
--- freshName = freshNameFrom "name"
-
-genProgram' :: Program Typed -> M ()
-genProgram' Program {decls} = do
+genDecls :: [Decl Typed] -> M ()
+genDecls decls = do
   genIncludes
   for_ decls \decl -> do
     #scope .= mempty
     genDecl decl
     emitLn ""
 
-toCType :: Type -> Text
-toCType ty = case ty of
-  PrimInt (IntType size signed) -> do
-    let prefix = case signed of
-          Unsigned -> "u"
-          Signed -> ""
-    prefix <> "int" <> (show (sizeToInt size)).t <> "_t"
-  Void -> "void"
-  _ -> undefined
+toCType :: Type -> M Text
+toCType ty = do
+  env <- ask
+  let go ty =
+        case ty of
+          NamedType name -> do
+            let struct = env.info.structs ^?! ix name
+            "struct {"
+              <> foldr (\(field, ty) b -> go ty <> " " <> field.tb <> ";" <> b) "" struct.fields
+              <> "}"
+          PrimInt (IntType size signed) -> do
+            let prefix = case signed of
+                  Unsigned -> "u"
+                  Signed -> ""
+            prefix <> "int" <> (show (sizeToInt size)).tb <> "_t"
+          Void -> "void"
+          PrimBool -> "bool"
+          Pointer ty -> go ty <> "*"
+          Array ArrayType {size, ty} -> "struct{" <> go ty <> " a[" <> (show size).tb <> "];}"
+          Unknown -> error "should not get unknown"
+  pure . TB.runBuilder . go $ ty
+  where
+
+emitType :: Type -> M ()
+emitType = emit <=< toCType
 
 genIncludes :: M ()
 genIncludes = do
@@ -102,27 +119,30 @@ braces :: M a -> M a
 braces = delim "{" "}"
 
 genBuiltin :: BuiltinTyped -> M ()
-genBuiltin builtin = case builtin of
-  Add e1 e2 -> parens do
-    genExpr e1
-    emit "+"
-    genExpr e2
-  Mul e1 e2 -> parens do
-    genExpr e1
-    emit "*"
-    genExpr e2
-  Sub e1 e2 -> parens do
-    genExpr e1
-    emit "-"
-    genExpr e2
+genBuiltin (SomeBuiltin tag args) = case tag of
+  Add -> bin "+"
+  Mul -> bin "*"
+  Sub -> bin "-"
+  Eq -> bin "=="
+  Lt -> bin "<"
+  Le -> bin "<="
+  Gt -> bin ">"
+  Ge -> bin ">="
   _ -> undefined
+  where
+    bin op = case args of
+      [_, Right e1, Right e2] -> do
+        genExpr e1
+        emit op
+        genExpr e2
+      _ -> error "wrong args"
 
 genLiteral :: Literal Typed -> M ()
 genLiteral lit = case lit of
   Num num ty -> do
     parens do
       parens do
-        emit $ toCType ty
+        emitType ty
       case num of
         Decimal {num} -> do
           emit $ (show num).t
@@ -144,6 +164,21 @@ genExpr expr = case expr of
   Var var -> emit $ localNameToText var
   _ -> undefined
 
+genBody :: [Stmt Typed] -> M ()
+genBody body = braces $ mapM_ genStmt body
+
+genIfCont :: IfCont Typed -> M ()
+genIfCont cont = case cont of
+  ElseIf {cond, body, cont} -> do
+    emit "else if"
+    parens do genExpr cond
+    genBody body
+    genIfCont cont
+  Else {body} -> do
+    emit "else"
+    genBody body
+  NoIfCont -> pure ()
+
 genStmt :: Stmt Typed -> M ()
 genStmt stmt = case stmt of
   Return e -> do
@@ -152,11 +187,20 @@ genStmt stmt = case stmt of
       Nothing -> pure ()
       Just e -> genExpr e
     emit ";"
+  Loop body -> do
+    emit "while (1)"
+    genBody body
+  If cond body cont -> do
+    emit "if"
+    parens do
+      genExpr cond
+    genBody body
+    genIfCont cont
   ExprStmt expr -> do
     genExpr expr
     emit ";"
   Let name ty expr -> do
-    emit $ toCType ty
+    emitType ty
     emit " "
     emit $ localNameToText name
     emit "="
@@ -173,18 +217,18 @@ commaList ts f = forM_ (zip [0 ..] ts) \(i, t) -> do
     len = length ts
 
 nameToText :: LocalName -> Text
-nameToText (LocalName name id) = name <> (show id).t
+nameToText  = localNameToText
 
 genDecl :: Decl Typed -> M ()
 genDecl decl = case decl of
   Fn name FnInfo {fnType = FnType {params = paramTypes, returnType}, params, body} -> do
     -- emit "static inline "
-    emit $ toCType returnType
+    emitType returnType
     emit " "
     emit name
     parens do
       commaList (zip params (fmap snd paramTypes)) \(name, ty) -> do
-        emit $ toCType ty
+        emitType ty
         emit " "
         emit $ nameToText name
     case body of

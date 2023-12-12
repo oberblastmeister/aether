@@ -4,6 +4,7 @@
 module Cp.Check
   ( ProgramInfo (..),
     checkProgram,
+    revertProgram,
   )
 where
 
@@ -16,11 +17,7 @@ import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import Data.Traversable (for)
 import Debug.Trace
-import Debug.Trace (traceShowM)
-import Dot ()
-import Optics
-import Optics.Operators.Unsafe ((^?!))
-import Optics.State.Operators
+import Imports
 
 data Scope = Scope
   { mapping :: HashMap Text (Type, LocalName)
@@ -187,56 +184,55 @@ inferPlace (Place expr place) = do
             expectError "named".t (show ty).t
             pure Unknown
 
--- inferCall :: CallExpr -> M (Type, Expr)
--- inferCall CallExpr {name, args} ty = do
---   undefined
-
--- checkBuiltin :: Text -> [Either Type (Expr Parsed)] -> [Either Type (Expr Typed)]
--- checkBuiltin _ _ = undefined
-
--- inferExpr :: Expr Parsed -> M (Type, Expr Typed)
--- inferExpr expr = case expr of
---   Call call args -> undefined
---   StructLiteral fields ty -> pure (Unknown, expr)
---   Literal lit -> (,expr) <$> inferLiteral lit
---   Null -> pure (Unknown, expr)
---   Place expr place -> do
---     inferExpr expr
-
-inferBuiltin :: BuiltinParsed -> M (Type, Expr Typed)
-inferBuiltin BuiltinParsed {name, args} = case name.s of
-  "add" -> bin checkIntType Add
-  "sub" -> bin checkIntType Sub
-  "mul" -> bin checkIntType Mul
-  "eq" -> bin checkIntType Eq
-  "lt" -> bin checkIntType Lt
-  "le" -> bin checkIntType Le
-  "ge" -> bin checkIntType Ge
-  "gt" -> bin checkIntType Gt
+builtinSpec :: BuiltinTag -> BuiltinSpec
+builtinSpec tag = case tag of
+  Add -> binNum "add".t
+  Sub -> binNum "sub".t
+  Mul -> binNum "mul".t
+  Eq -> binNumBool "eq".t
+  Lt -> binNumBool "lt".t
+  Le -> binNumBool "le".t
+  Ge -> binNumBool "ge".t
+  Gt -> binNumBool "gt".t
   _ -> undefined
   where
-    bin checkTy f = case args of
-      [Left ty, Right e, Right e'] -> do
-        checkTy ty
-        e <- checkExpr e ty
-        e' <- checkExpr e' ty
-        pure (ty, Builtin $ f e e')
-      _ -> do
-        checkError $ "invalid arguments for ".t <> name
-        pure (Unknown, Error)
-    unary f = case args of
-      [Left ty, Right e, Right e'] -> do
-        checkIntType ty
-        e <- checkExpr e ty
-        e' <- checkExpr e' ty
-        pure (ty, Builtin $ f e e')
-      _ -> do
-        checkError $ "invalid arguments for ".t <> name
-        pure (Unknown, Error)
-
+    binNum = bin checkIntType id 2
+    binNumBool = bin checkIntType (const PrimBool) 2
+    bin checkTy returnTy num name =
+      BuiltinSpec name \args -> case args of
+        (Left ty) : rest | length @[] rest == num -> do
+          _ <- checkTy ty
+          args' <- traverseOf focusBuiltinArgs (`checkExpr` ty) args
+          pure $ Just (returnTy ty, args')
+        _ -> do
+          checkError $ "invalid arguments for ".t <> name
+          pure Nothing
     checkIntType ty = case ty of
       PrimInt _ -> pure ()
-      _ -> expectError (show ty).t "int".t
+      _ -> checkError $ "expected int type".t
+
+data BuiltinSpec = BuiltinSpec
+  { name :: Text,
+    parseArgs :: BuiltinArgs Parsed -> M (Maybe (Type, BuiltinArgs Typed))
+  }
+
+builtinSpecs :: [(BuiltinTag, BuiltinSpec)]
+builtinSpecs = (\tag -> (tag, builtinSpec tag)) <$> [minBound .. maxBound]
+
+inferWrong :: (Type, Expr p)
+inferWrong = (Unknown, Error)
+
+parseBuiltin :: BuiltinParsed -> M (Type, Expr Typed)
+parseBuiltin builtin = case findRes of
+  Nothing -> undefined
+  Just (tag, spec) -> do
+    spec.parseArgs builtin.args >>= \case
+      Nothing -> do
+        checkError $ "invalid arguments for ".t <> builtin.name
+        pure inferWrong
+      Just (ty, args) -> pure (ty, Builtin $ SomeBuiltin tag args)
+  where
+    findRes = findOf each (\(_tag, spec) -> spec.name == builtin.name) builtinSpecs
 
 inferExpr :: Expr Parsed -> M (Type, Expr Typed)
 inferExpr expr = case expr of
@@ -267,9 +263,10 @@ inferExpr expr = case expr of
         checkError $ "var ".t <> var <> " not found".t
         pure (Unknown, Error)
       Just res -> pure $ Var <$> res
-  Ref expr -> undefined
+  Ref expr -> do
+    undefined
   PlaceExpr place -> (fmap . fmap) PlaceExpr (inferPlace place)
-  Builtin builtin -> inferBuiltin builtin
+  Builtin builtin -> parseBuiltin builtin
   _ -> pure (Unknown, Error)
 
 checkExpr :: Expr Parsed -> Type -> M (Expr Typed)
@@ -286,15 +283,12 @@ checkExpr expr ty = do
       case ty of
         NamedType name -> do
           info <- use (#structs % at name)
-          -- case info of
-          --   Nothing -> error "impossible"
-          --   Just info -> undefined
-          pure Error
-
-        -- case lookupType st name of
-        --   Nothing ->
-        --   Just
-
+          case info of
+            Nothing -> do
+              checkError $ "could not find struct ".t <> name
+              pure Error
+            Just info -> case info.fields of
+              _ -> undefined
         _ -> do
           checkError "expected namedtype".t
           pure Error
@@ -325,13 +319,15 @@ checkTypeNotDuplicate name = do
 
 checkCont :: IfCont Parsed -> Type -> M (IfCont Typed)
 checkCont ic ty = case ic of
-  ElseIf {cond, body} -> do
+  ElseIf {cond, body, cont} -> do
     cond <- checkExpr cond PrimBool
     body <- checkBody body ty
-    pure ElseIf {cond, body}
+    cont <- checkCont cont ty
+    pure ElseIf {cond, body, cont}
   Else {body} -> do
     body <- checkBody body ty
     pure Else {body}
+  NoIfCont -> pure NoIfCont
 
 -- the type is the type of the return
 checkStmt :: Stmt Parsed -> Type -> M (Stmt Typed)
@@ -404,23 +400,81 @@ checkDecl d = do
       #pos .= pos
       checkDecl d
 
-data ProgramInfo = ProgramInfo
-  { structs :: HashMap Text (StructInfo),
-    enums :: HashMap Text (EnumInfo),
-    unions :: HashMap Text (UnionInfo),
-    fns :: HashMap Text FnType
-  }
-
-checkProgram :: Program Parsed -> Either [CheckError] (Program Typed, ProgramInfo)
-checkProgram Program {decls} =
+checkProgram :: ProgramParsed -> Either [CheckError] (ProgramTyped)
+checkProgram ProgramParsed {decls = declsParsed} =
   case st.errors of
-    [] -> Right (res, info)
+    [] -> Right ProgramTyped {decls, info}
     errors -> Left errors
   where
     info = ProgramInfo {structs = st.structs, enums = st.enums, unions = st.unions, fns = st.fns}
-    (res, st) = runState (runReaderT act mkCheckEnv) mkCheckState
+    (decls, st) = runState (runReaderT act mkCheckEnv) mkCheckState
     act = do
-      decls <- for decls \decl -> do
+      decls <- for declsParsed \decl -> do
         #unique .= 0
         checkDecl decl
-      pure Program {decls}
+      pure decls
+
+revertProgram :: ProgramTyped -> ProgramParsed
+revertProgram ProgramTyped {decls} = ProgramParsed (revertDecl <$> decls)
+
+revertDecl :: Decl Typed -> Decl Parsed
+revertDecl decl = case decl of
+  Struct name info -> Struct name info
+  Fn name info -> Fn name (FnInfo info.fnType (revertVar <$> info.params) (revertBody <$> info.body))
+  Enum name info -> Enum name info
+  Union name info -> Union name info
+  SpannedDecl decl pos -> SpannedDecl (revertDecl decl) pos
+
+revertVar :: Var Typed -> Var Parsed
+revertVar = localNameToText
+
+revertBody :: [Stmt Typed] -> [Stmt Parsed]
+revertBody stmt = revertStmt <$> stmt
+
+revertStmt :: Stmt Typed -> Stmt Parsed
+revertStmt stmt = case stmt of
+  If cond body cont -> If (revertExpr cond) (revertBody body) (revertIfCont cont)
+  Loop body -> Loop $ revertBody body
+  ExprStmt expr -> ExprStmt $ revertExpr expr
+  Let var ty expr -> Let (revertVar var) ty (revertExpr expr)
+  Set place expr -> Set (revertPlace place) (revertExpr expr)
+  Return expr -> Return (revertExpr <$> expr)
+  Break -> Break
+
+revertIfCont :: IfCont Typed -> IfCont Parsed
+revertIfCont cont = case cont of
+  ElseIf cond body cont -> ElseIf (revertExpr cond) (revertBody body) (revertIfCont cont)
+  Else body -> Else (revertBody body)
+  NoIfCont -> NoIfCont
+
+revertPlace :: Place Typed -> Place Parsed
+revertPlace (Place expr cx) = Place (revertExpr expr) cx
+
+revertExpr :: Expr Typed -> Expr Parsed
+revertExpr expr = case expr of
+  As ty expr -> As ty (revertExpr expr)
+  Call var exprs -> do
+    let var' = case var of
+          CallTop name -> name
+          CallLocal name -> revertVar name
+    Call var' (revertExpr <$> exprs)
+  Builtin builtin ->
+    Builtin case builtin of
+      SomeBuiltin tag args -> do
+        let args' = args & focusBuiltinArgs %~ revertExpr
+        case findOf each (\(tag', _) -> tag == tag') builtinSpecs of
+          Nothing -> BuiltinParsed "__could_not_find_tag_name".t args'
+          Just (_tag, spec) -> BuiltinParsed spec.name args'
+  SpannedExpr expr p -> SpannedExpr (revertExpr expr) p
+  Null -> Null
+  PlaceExpr place -> PlaceExpr $ revertPlace place
+  Ref expr -> Ref $ revertExpr expr
+  Literal lit -> case lit of
+    String s -> Literal $ String s
+    Char c -> Literal $ Char c
+    Num num ty -> As ty $ Literal (Num num ())
+    Bool b -> Literal $ Bool b
+  StructLiteral fields ty -> As ty (StructLiteral (fields & each % _2' %~ revertExpr) ())
+  Error -> Error
+  EnumLiteral name _ -> EnumLiteral name ()
+  Var var -> Var $ revertVar var

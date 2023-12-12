@@ -4,6 +4,6 @@ dist-newstyle/
 .direnv/
 zig-cache/
 zig-out/
-
+_build/
 
 
