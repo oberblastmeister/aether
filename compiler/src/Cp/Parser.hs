@@ -6,14 +6,11 @@
 
 module Cp.Parser (parse, showError) where
 
-import Control.Monad (guard, void)
 import Control.Monad.Combinators
 import Control.Monad.Combinators.Expr
 import Cp.Syntax
 import Data.Char qualified as Char
 import Data.Foldable (foldl')
-import Data.Functor (($>))
-import Data.Text (Text)
 import Data.Text qualified as T
 import Debug.Trace (traceM)
 import Imports hiding (noneOf)
@@ -129,7 +126,7 @@ pStructLiteral = do
       )
       (char ',')
   char '}'
-  pure $ StructLiteral fields ()
+  pure $ BraceLiteral fields ()
 
 pEnumLiteral :: Parser (Expr Parsed)
 pEnumLiteral = do
@@ -333,12 +330,13 @@ pLet :: Parser (Stmt Parsed)
 pLet = do
   pKeyword "let"
   name <- pIdent
-  char ':'
-  ty <- pType
+  ty <- optional do
+    char ':'
+    pType
   char '='
   expr <- pExpr
   char ';'
-  pure $ Let name ty expr
+  pure $ Let name ty expr ()
 
 pExpr :: Parser (Expr Parsed)
 pExpr = pExpr' >>= rest

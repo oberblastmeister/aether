@@ -7,22 +7,11 @@ module Cp.Backend.C
   )
 where
 
-import Control.Monad
-import Control.Monad.Reader
-import Control.Monad.State.Strict
 import Cp.Check
 import Cp.Syntax
-import Data.Foldable (for_)
-import Imports
-import Data.HashMap.Strict (HashMap)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Builder.Linear qualified as TB
-
--- import Prettyprinter hiding (Doc)
--- import Prettyprinter qualified as P
-
--- type Doc = P.Doc Void
+import Imports
 
 data GenState = GenState
   { out :: [Text],
@@ -47,8 +36,7 @@ mkGenEnv :: ProgramInfo -> Bool -> GenEnv
 mkGenEnv info whitespace = GenEnv {info, whitespace, indent = 0}
 
 emit :: Text -> M ()
-emit t = do
-  #out %= (t :)
+emit t = #out %= (t :)
 
 emitLn :: Text -> M ()
 emitLn t = do
@@ -95,7 +83,6 @@ toCType ty = do
           Array ArrayType {size, ty} -> "struct{" <> go ty <> " a[" <> (show size).tb <> "];}"
           Unknown -> error "should not get unknown"
   pure . TB.runBuilder . go $ ty
-  where
 
 emitType :: Type -> M ()
 emitType = emit <=< toCType
@@ -128,7 +115,7 @@ genBuiltin (SomeBuiltin tag args) = case tag of
   Le -> bin "<="
   Gt -> bin ">"
   Ge -> bin ">="
-  _ -> undefined
+  _ -> todo
   where
     bin op = case args of
       [_, Right e1, Right e2] -> do
@@ -145,16 +132,16 @@ genLiteral lit = case lit of
         emitType ty
       case num of
         Decimal {num} -> do
-          emit $ (show num).t
-        _ -> undefined
-  _ -> undefined
+          emit (show num).t
+        _ -> todo
+  _ -> todo
 
 genExpr :: Expr Typed -> M ()
 genExpr expr = case expr of
   Builtin builtin -> genBuiltin builtin
   Call name args -> do
     case name of
-      CallLocal local -> undefined
+      CallLocal local -> todo
       CallTop name -> do
         emit name
     parens do
@@ -162,7 +149,7 @@ genExpr expr = case expr of
         genExpr arg
   Literal lit -> genLiteral lit
   Var var -> emit $ localNameToText var
-  _ -> undefined
+  _ -> todo
 
 genBody :: [Stmt Typed] -> M ()
 genBody body = braces $ mapM_ genStmt body
@@ -199,17 +186,17 @@ genStmt stmt = case stmt of
   ExprStmt expr -> do
     genExpr expr
     emit ";"
-  Let name ty expr -> do
+  Let name _ expr ty -> do
     emitType ty
     emit " "
     emit $ localNameToText name
     emit "="
     genExpr expr
     emit ";"
-  _ -> undefined
+  _ -> todo
 
 commaList :: [a] -> (a -> M b) -> M ()
-commaList ts f = forM_ (zip [0 ..] ts) \(i, t) -> do
+commaList ts f = for_ (zip [0 ..] ts) \(i, t) -> do
   void $ f t
   when (i < len - 1) do
     emit ","
@@ -217,7 +204,7 @@ commaList ts f = forM_ (zip [0 ..] ts) \(i, t) -> do
     len = length ts
 
 nameToText :: LocalName -> Text
-nameToText  = localNameToText
+nameToText = localNameToText
 
 genDecl :: Decl Typed -> M ()
 genDecl decl = case decl of
@@ -236,4 +223,4 @@ genDecl decl = case decl of
         braces do
           for_ body \stmt -> genStmt stmt
       Nothing -> emit ";"
-  _ -> undefined
+  _ -> todo

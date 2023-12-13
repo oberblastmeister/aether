@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Imports.Dot where
+module Imports.Dot () where
 
 import Control.Exception qualified as Exception
 import Data.ByteString (ByteString)

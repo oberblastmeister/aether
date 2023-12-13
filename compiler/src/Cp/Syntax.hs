@@ -1,20 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE StrictData #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeData #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Cp.Syntax where
 
-import Data.HashMap.Internal.Strict (HashMap)
-import Data.Hashable (Hashable)
-import Data.Kind (Constraint)
 import Data.Kind qualified as Kind
-import Data.Text (Text)
 import Imports
-import GHC.Generics (Generic)
-import Optics
 import Prelude hiding (Num)
 
 data SourcePos = SourcePos Int
@@ -38,7 +29,9 @@ type PhaseC (c :: Kind.Type -> Constraint) p =
   ( c (TypeAnn p),
     c (BuiltinPhase p),
     c (Var p),
-    c (CallVar p)
+    c (CallVar p),
+    c (OnlyOnPhase Parsed p),
+    c (OnlyOnPhase Typed p)
   )
 
 data Literal p
@@ -117,10 +110,6 @@ data BuiltinTag
 data BuiltinTyped = SomeBuiltin BuiltinTag (BuiltinArgs Typed)
   deriving (Show, Eq)
 
--- deriving instance (PhaseC Show p) => Show (BuiltinTyped p)
-
--- deriving instance (PhaseC Eq p) => Eq (BuiltinTyped p)
-
 type family BuiltinPhase p where
   BuiltinPhase Parsed = BuiltinParsed
   BuiltinPhase Typed = BuiltinTyped
@@ -153,19 +142,31 @@ deriving instance (PhaseC Show p) => Show (Place p)
 
 deriving instance (PhaseC Eq p) => Eq (Place p)
 
+type family OnlyOnPhase p q where
+  OnlyOnPhase Parsed Parsed = ()
+  OnlyOnPhase Typed Typed = ()
+  OnlyOnPhase _ _ = Void
+
 data Expr p
   = Call (CallVar p) [Expr p]
   | Builtin (BuiltinPhase p)
   | SpannedExpr (Expr p) SourcePos
   | As Type (Expr p)
+  | Cast Type Type (Expr p)
+  | IntCast IntType IntType (Expr p) (OnlyOnPhase Typed p)
   | Null
   | PlaceExpr (Place p)
   | Ref (Expr p)
   | Literal (Literal p)
-  | StructLiteral [(Maybe Text, (Expr p))] (TypeAnn p)
+  | BraceLiteral (Fields p) (OnlyOnPhase Parsed p)
+  | ArrayLiteral [Expr p] (OnlyOnPhase Typed p)
+  | StructLiteral [(Text, Expr Typed)] (HashMap Text (Expr Typed)) Type (OnlyOnPhase Typed p)
+  | VoidLiteral (OnlyOnPhase Typed p)
   | Error
   | EnumLiteral Text (TypeAnn p)
   | Var (Var p)
+
+type Fields p = [(Maybe Text, (Expr p))]
 
 deriving instance (PhaseC Show p) => Show (Expr p)
 
@@ -219,11 +220,15 @@ deriving instance (PhaseC Show p) => Show (IfCont p)
 
 deriving instance (PhaseC Eq p) => Eq (IfCont p)
 
+-- data PhaseMaybe :: Phase -> Type -> Type where
+--   PhaseJust :: forall p a. a -> PhaseMaybe p a
+--   PhaseNothing :: forall p a. PhaseMaybe p a
+
 data Stmt p
   = If (Expr p) [Stmt p] (IfCont p)
   | Loop [Stmt p]
   | ExprStmt (Expr p)
-  | Let (Var p) Type (Expr p)
+  | Let (Var p) (Maybe Type) (Expr p) (TypeAnn p)
   | Set (Place p) (Expr p)
   | Return (Maybe (Expr p))
   | Break
@@ -295,4 +300,5 @@ data ProgramTyped = ProgramTyped
   }
   deriving (Show, Eq)
 
+makePrismLabels ''Type
 makeFieldLabelsNoPrefix ''StructInfo

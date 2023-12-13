@@ -92,6 +92,7 @@ common common-flags
     OverloadedLabels,
     OverloadedRecordDot,
     StrictData,
+    TypeData,
   default-language: GHC2021
   ghc-options:
     -Wall
@@ -122,6 +123,7 @@ common common-flags
     typed-process,
     scientific,
     text-builder-linear,
+    these,
 
 library
   import: common-flags
@@ -129,6 +131,13 @@ library
   exposed-modules:
     Imports
     Imports.Dot
+    Imports.Panic
+    Imports.Data
+    Imports.Monad
+    Imports.Functor
+    Imports.Function
+    Imports.Traversable
+    Imports.Kind
     Cp
     Cp.Check
     Cp.Parser
