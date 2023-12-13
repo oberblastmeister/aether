@@ -12,7 +12,6 @@ import Cp.Syntax
 import Data.Char qualified as Char
 import Data.Foldable (foldl')
 import Data.Text qualified as T
-import Debug.Trace (traceM)
 import Imports hiding (noneOf)
 import Text.Megaparsec hiding (parse)
 import Text.Megaparsec qualified as P

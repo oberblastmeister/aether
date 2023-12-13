@@ -11,7 +11,6 @@ where
 import Cp.Syntax
 import Data.HashMap.Strict qualified as HM
 import Data.These qualified as These
-import Debug.Trace
 import Imports
 
 data Scope = Scope
@@ -19,9 +18,9 @@ data Scope = Scope
   }
 
 data CheckState = CheckState
-  { structs :: HashMap Text (StructInfo),
-    enums :: HashMap Text (EnumInfo),
-    unions :: HashMap Text (UnionInfo),
+  { structs :: HashMap Text StructInfo,
+    enums :: HashMap Text EnumInfo,
+    unions :: HashMap Text UnionInfo,
     fns :: HashMap Text FnType,
     pos :: SourcePos,
     errors :: [CheckError],
@@ -441,6 +440,7 @@ inferLiteral lit =
 checkTypeNotDuplicate :: Text -> M ()
 checkTypeNotDuplicate name = do
   st <- get
+  traceM $ "st: " ++ show st.structs
   case lookupType st name of
     True -> checkError $ ("duplicate type: ".t <> name)
     False -> pure ()
@@ -515,7 +515,7 @@ checkDecl d = do
       #enums % at name .= Just info
       pure $ Enum name info
     Fn name FnInfo {fnType = fnType@FnType {params = paramTypes, returnType}, params, body} -> do
-      traceShowM "checking fn"
+      traceM "checking fn"
       mapM_ checkType (fmap snd paramTypes)
       checkType returnType
       freshParams <- for params \param -> do

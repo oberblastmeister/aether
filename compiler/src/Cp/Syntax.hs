@@ -209,6 +209,7 @@ data Type
   | PrimInt IntType
   | PrimBool
   | Pointer Type
+  | Atomic Type
   | Void
   | Unknown
   | Array ArrayType
@@ -278,7 +279,7 @@ deriving instance (PhaseC Show p) => Show (FnInfo p)
 deriving instance (PhaseC Eq p) => Eq (FnInfo p)
 
 data Decl p
-  = Struct Text (StructInfo)
+  = Struct Text StructInfo
   | Fn Text (FnInfo p)
   | Enum Text (EnumInfo)
   | Union Text (UnionInfo)

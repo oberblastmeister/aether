@@ -6,6 +6,14 @@ fn assert_u32(x: u32, y: u32) void;
 
 fn assert_u64(x: u64, y: u64) void;
 
+struct ae_object {
+    fields: u8,
+    _field_index: u8,
+    other: u8,
+    tag: u8,
+    ref_count: u32,
+}
+
 fn another() void {
     let i = 1;
     let j: u32 = 2;

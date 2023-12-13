@@ -62,16 +62,11 @@ genDecls decls = do
     genDecl decl
     emitLn ""
 
-toCType :: Type -> M Text
+toCType :: Type -> Text
 toCType ty = do
-  env <- ask
   let go ty =
         case ty of
-          NamedType name -> do
-            let struct = env.info.structs ^?! ix name
-            "struct {"
-              <> foldr (\(field, ty) b -> go ty <> " " <> field.tb <> ";" <> b) "" struct.fields
-              <> "}"
+          NamedType name -> "struct " <> name.tb
           PrimInt (IntType size signed) -> do
             let prefix = case signed of
                   Unsigned -> "u"
@@ -82,10 +77,10 @@ toCType ty = do
           Pointer ty -> go ty <> "*"
           Array ArrayType {size, ty} -> "struct{" <> go ty <> " a[" <> (show size).tb <> "];}"
           Unknown -> error "should not get unknown"
-  pure . TB.runBuilder . go $ ty
+  TB.runBuilder . go $ ty
 
 emitType :: Type -> M ()
-emitType = emit <=< toCType
+emitType = emit <$> toCType
 
 genIncludes :: M ()
 genIncludes = do
@@ -229,4 +224,12 @@ genDecl decl = case decl of
         braces do
           for_ body \stmt -> genStmt stmt
       Nothing -> emit ";"
+  Struct name info -> do
+    emit $ "struct " <> name
+    braces do
+      for_ info.fields \(name, ty) -> do
+        emitType ty
+        emit " "
+        emit name
+        emit ";"
   _ -> todo
