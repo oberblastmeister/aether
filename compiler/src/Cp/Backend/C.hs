@@ -129,7 +129,7 @@ genLiteral lit = case lit of
   Num num ty -> do
     parens do
       parens do
-        emitType ty
+        emitType (PrimInt ty)
       case num of
         Decimal {num} -> do
           emit (show num).t
@@ -149,7 +149,13 @@ genExpr expr = case expr of
         genExpr arg
   Literal lit -> genLiteral lit
   Var var -> emit $ localNameToText var
-  _ -> todo
+  IntCast toTy _fromTy expr () -> do
+    parens do
+      parens do
+        emitType (PrimInt toTy)
+      genExpr expr
+  PlaceExpr (Place expr PlaceHole) -> genExpr expr
+  expr -> todoMsg $ "genExpr: " ++ show expr
 
 genBody :: [Stmt Typed] -> M ()
 genBody body = braces $ mapM_ genStmt body

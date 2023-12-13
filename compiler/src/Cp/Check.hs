@@ -4,7 +4,7 @@
 module Cp.Check
   ( ProgramInfo (..),
     checkProgram,
-    revertProgram,
+    checkTyped,
   )
 where
 
@@ -135,11 +135,19 @@ eitherToM = \case
   Right a -> pure $ Just a
 
 -- actual, expected
-unifyType :: Type -> Type -> M ()
-unifyType Unknown _ = pure ()
-unifyType _ Unknown = pure ()
-unifyType ty1 ty2 = unless (ty1 == ty2) do
-  checkError $ ("expected type " <> (show ty2) <> ", got " <> (show ty1)).t
+unifyType :: Type -> Type -> M (Maybe (Expr Typed -> Expr Typed))
+unifyType Unknown _ = pure Nothing
+unifyType _ Unknown = pure Nothing
+unifyType (PrimInt ty1@(IntType size1 signed1)) (PrimInt ty2@(IntType size2 signed2))
+  | signed1 == signed2, size1 < size2 = pure $ Just \e -> IntCast ty2 ty1 e ()
+  | signed1 == signed2, size1 == size2 = pure Nothing
+  | otherwise = do
+      checkError $ "cannot cast from ".t <> (show ty1).t <> " to ".t <> (show ty2).t
+      pure Nothing
+unifyType ty1 ty2 = do
+  unless (ty1 == ty2) do
+    checkError $ ("expected type " <> (show ty2) <> ", got " <> (show ty1)).t
+  pure Nothing
 
 u8Ty :: Type
 u8Ty = PrimInt (IntType U8 Unsigned)
@@ -147,19 +155,28 @@ u8Ty = PrimInt (IntType U8 Unsigned)
 expectError :: Text -> Text -> M ()
 expectError actual expected = checkError $ "expected ".t <> expected <> ", got ".t <> actual
 
-checkLiteral :: Literal Parsed -> Type -> M (Literal Typed)
+maybeApply :: a -> Maybe (a -> a) -> a
+maybeApply x Nothing = x
+maybeApply x (Just f) = f x
+
+checkLiteral :: Literal Parsed -> Type -> M (Expr Typed)
 checkLiteral lit ty = do
   traceM "checking literal"
   case lit of
     Num lit () -> do
       case ty of
-        PrimInt _ -> pure ()
-        _ -> expectError "integer".t (show ty).t
-      pure $ Num lit ty
+        PrimInt intTy
+          | literalInBounds lit.num intTy -> do
+              pure $ Literal $ Num lit intTy
+          | otherwise -> do
+              expectError "integer out of bounds".t (show intTy).t
+              pure Error
+        _ -> do
+          expectError "integer".t (show ty).t
+          pure Error
     _ -> do
-      (ty', lit) <- inferLiteral lit
-      unifyType ty ty'
-      pure lit
+      (ty', expr) <- inferLiteral lit
+      unifyType ty' ty <&> maybeApply expr
 
 inferPlace :: Place Parsed -> M (Type, Place Typed)
 inferPlace (Place expr place) = do
@@ -206,7 +223,7 @@ builtinSpec tag = case tag of
       BuiltinSpec name \args -> case args of
         (Left ty) : rest | length @[] rest == num -> do
           _ <- checkTy ty
-          args' <- traverseOf focusBuiltinArgs (`checkExpr` ty) args
+          args' <- traverseOf (each % _Right) (`checkExpr` ty) args
           pure $ Just (returnTy ty, args')
         _ -> do
           checkError $ "invalid arguments for ".t <> name
@@ -221,7 +238,7 @@ data BuiltinSpec = BuiltinSpec
   }
 
 builtinSpecs :: [(BuiltinTag, BuiltinSpec)]
-builtinSpecs = (\tag -> (tag, builtinSpec tag)) <$> [minBound .. maxBound]
+builtinSpecs = (\tag -> (tag, builtinSpec tag)) <$> [minBound :: BuiltinTag .. maxBound]
 
 inferWrong :: (Type, Expr p)
 inferWrong = (Unknown, Error)
@@ -278,7 +295,7 @@ inferExpr expr = case expr of
             args <- for (zip args (fmap snd params)) \(arg, param) -> checkExpr arg param
             pure (returnType, Call (CallTop call) args)
   BraceLiteral fields _ -> inferBraceLiteral Nothing fields
-  Literal lit -> (fmap . fmap) Literal (inferLiteral lit)
+  Literal lit -> inferLiteral lit
   Var var ->
     lookupScope var >>= \case
       Nothing -> do
@@ -289,14 +306,13 @@ inferExpr expr = case expr of
     todo
   PlaceExpr place -> (fmap . fmap) PlaceExpr (inferPlace place)
   Builtin builtin -> parseBuiltin builtin
-  _ -> pure (Unknown, Error)
+  _ -> pure inferWrong
 
 checkExpr :: Expr Parsed -> Type -> M (Expr Typed)
 checkExpr expr ty = do
   traceM $ "checking expr: " ++ show expr ++ " ty: " ++ show ty
   case expr of
-    Literal lit -> do
-      Literal <$> checkLiteral lit ty
+    Literal lit -> checkLiteral lit ty
     PlaceExpr (Place expr place) -> do
       case place of
         PlaceHole -> checkExpr expr ty
@@ -306,8 +322,7 @@ checkExpr expr ty = do
       pure res
     _ -> do
       (ty', expr) <- inferExpr expr
-      unifyType ty' ty
-      pure expr
+      unifyType ty' ty <&> maybeApply expr
 
 getStructPartial :: (HasCallStack) => Type -> M (StructInfo)
 getStructPartial ty = do
@@ -333,7 +348,7 @@ inferBraceLiteral :: Maybe Type -> Fields Parsed -> M (Type, Expr Typed)
 inferBraceLiteral maybeTy fields = do
   case res of
     Nothing -> do
-      maybeUnify Void
+      void $ maybeUnify Void
       pure (Void, VoidLiteral ())
     Just (These.This fields) | Just ty <- maybeTy -> do
       st <- get
@@ -345,7 +360,7 @@ inferBraceLiteral maybeTy fields = do
               fields <- for fields \(name, expr, ty) -> do
                 expr <- checkExpr expr ty
                 pure (name, expr)
-              pure (ty, StructLiteral fields (HM.fromList fields) ty ())
+              pure (ty, StructLiteral fields (HM.fromList fields) struct name ())
         NamedType name | otherwise -> do
           checkError $ "could not find struct ".t <> name
           pure inferWrong
@@ -356,7 +371,7 @@ inferBraceLiteral maybeTy fields = do
       checkError "cannot infer type of struct literal".t
       pure inferWrong
     Just (These.That ()) -> do
-      maybeUnify Void
+      void $ maybeUnify Void
       pure (Void, VoidLiteral ())
     Just (These.These _ _) -> do
       checkError "cannot mix named and unnamed fields".t
@@ -368,21 +383,60 @@ inferBraceLiteral maybeTy fields = do
         (Just . \case (Nothing, _) -> These.That (); (Just name, expr) -> These.This [(name, expr)])
         fields
     maybeUnify ty' = case maybeTy of
-      Nothing -> pure ()
+      Nothing -> pure Nothing
       Just ty -> unifyType ty ty'
 
-unknownTypeError :: M ()
-unknownTypeError = checkError "cannot infer type".t
+intTypeBounds :: IntType -> (Integer, Integer)
+intTypeBounds (IntType size signed) = case signed of
+  Unsigned -> case size of
+    U8 -> (fromIntegral $ minBound @Word8, fromIntegral $ maxBound @Word8)
+    U16 -> (fromIntegral $ minBound @Word16, fromIntegral $ maxBound @Word16)
+    U32 -> (fromIntegral $ minBound @Word32, fromIntegral $ maxBound @Word32)
+    U64 -> (fromIntegral $ minBound @Word64, fromIntegral $ maxBound @Word64)
+  Signed -> case size of
+    U8 -> (fromIntegral $ minBound @Int8, fromIntegral $ maxBound @Int8)
+    U16 -> (fromIntegral $ minBound @Int16, fromIntegral $ maxBound @Int16)
+    U32 -> (fromIntegral $ minBound @Int32, fromIntegral $ maxBound @Int32)
+    U64 -> (fromIntegral $ minBound @Int64, fromIntegral $ maxBound @Int64)
 
-inferLiteral :: Literal Parsed -> M (Type, Literal Typed)
+unsignedBounds :: [(Size, Integer, Integer)]
+unsignedBounds = (\size -> let (lower, upper) = intTypeBounds (IntType size Unsigned) in (size, lower, upper)) <$> [U8 .. U64]
+
+signedBounds :: [(Size, Integer, Integer)]
+signedBounds = (\size -> let (lower, upper) = intTypeBounds (IntType size Signed) in (size, lower, upper)) <$> [U8 .. U64]
+
+literalInBounds :: Integer -> IntType -> Bool
+literalInBounds i (IntType size signed) = low <= i && i <= high
+  where
+    (low, high) = intTypeBounds (IntType size signed)
+
+inferLiteral :: Literal Parsed -> M (Type, Expr Typed)
 inferLiteral lit =
   case lit of
-    String s -> pure $ (Pointer u8Ty, String s)
-    Char c -> pure $ (u8Ty, Char c)
+    String s -> pure $ (Pointer u8Ty, Literal $ String s)
+    Char c -> pure $ (u8Ty, Literal $ Char c)
     Num num () -> do
-      unknownTypeError
-      pure (Unknown, Num num Unknown)
-    Bool b -> pure (PrimBool, Bool b)
+      let i = num.num
+      case i < 0 of
+        True -> do
+          let signed = findOf each (\(_size, min, max) -> i >= min && i <= max) signedBounds
+          case signed of
+            Nothing -> do
+              checkError $ "integer out of bounds".t
+              pure inferWrong
+            Just (size, _, _) -> do
+              let ty = IntType size Signed
+              pure (PrimInt ty, Literal $ Num num ty)
+        False -> do
+          let unsigned = findOf each (\(_size, min, max) -> i >= min && i <= max) unsignedBounds
+          case unsigned of
+            Nothing -> do
+              checkError $ "integer out of bounds".t
+              pure inferWrong
+            Just (size, _, _) -> do
+              let ty = IntType size Unsigned
+              pure (PrimInt ty, Literal $ Num num ty)
+    Bool b -> pure (PrimBool, Literal $ Bool b)
 
 checkTypeNotDuplicate :: Text -> M ()
 checkTypeNotDuplicate name = do
@@ -430,7 +484,7 @@ checkStmt stmt returnTy = case stmt of
     traceM "checking return"
     case expr of
       Nothing -> do
-        unifyType returnTy Void
+        void $ unifyType returnTy Void
         pure $ Return Nothing
       Just expr -> Return . Just <$> checkExpr expr returnTy
   Break -> pure Break
@@ -493,6 +547,9 @@ checkProgram ProgramParsed {decls = declsParsed} =
         checkDecl decl
       pure decls
 
+checkTyped :: ProgramTyped -> Either [CheckError] ProgramTyped
+checkTyped = checkProgram . revertProgram
+
 revertProgram :: ProgramTyped -> ProgramParsed
 revertProgram ProgramTyped {decls} = ProgramParsed (revertDecl <$> decls)
 
@@ -540,8 +597,8 @@ revertExpr expr = case expr of
   Builtin builtin ->
     Builtin case builtin of
       SomeBuiltin tag args -> do
-        let args' = args & focusBuiltinArgs %~ revertExpr
-        case findOf each (\(tag', _) -> tag == tag') builtinSpecs of
+        let args' = args & each % _Right %~ revertExpr
+        case findOf each ((== tag) . fst) builtinSpecs of
           Nothing -> BuiltinParsed "__could_not_find_tag_name".t args'
           Just (_tag, spec) -> BuiltinParsed spec.name args'
   SpannedExpr expr p -> SpannedExpr (revertExpr expr) p
@@ -551,7 +608,7 @@ revertExpr expr = case expr of
   Literal lit -> case lit of
     String s -> Literal $ String s
     Char c -> Literal $ Char c
-    Num num ty -> As ty $ Literal (Num num ())
+    Num num ty -> As (PrimInt ty) $ Literal (Num num ())
     Bool b -> Literal $ Bool b
   Error -> Error
   EnumLiteral name _ -> EnumLiteral name ()
@@ -559,5 +616,5 @@ revertExpr expr = case expr of
   Cast ty ty' expr -> Cast ty ty' (revertExpr expr)
   IntCast ty _ty' expr () -> As (PrimInt ty) (revertExpr expr)
   ArrayLiteral exprs () -> BraceLiteral (fmap ((Nothing,) . revertExpr) exprs) ()
-  StructLiteral fields _map ty () -> As ty (BraceLiteral (fmap (\(name, expr) -> (Just name, revertExpr expr)) fields) ())
+  StructLiteral fields _map _info name () -> As (NamedType name) (BraceLiteral (fmap (\(name, expr) -> (Just name, revertExpr expr)) fields) ())
   VoidLiteral () -> BraceLiteral [] ()

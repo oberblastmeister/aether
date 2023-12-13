@@ -25,8 +25,13 @@ type family TypeAnn p where
   TypeAnn Parsed = ()
   TypeAnn Typed = Type
 
+type family IntTypeAnn p where
+  IntTypeAnn Parsed = ()
+  IntTypeAnn Typed = IntType
+
 type PhaseC (c :: Kind.Type -> Constraint) p =
   ( c (TypeAnn p),
+    c (IntTypeAnn p),
     c (BuiltinPhase p),
     c (Var p),
     c (CallVar p),
@@ -39,7 +44,7 @@ data Literal p
   | Char Text
   | Num
       (NumLiteral)
-      (TypeAnn p)
+      (IntTypeAnn p)
   | Bool Bool
 
 deriving instance (PhaseC Show p) => Show (Literal p)
@@ -60,9 +65,6 @@ data PlaceContext
 type data Phase = Parsed | Typed
 
 type BuiltinArgs p = [Either Type (Expr p)]
-
-focusBuiltinArgs :: Optic A_Traversal '[Int] (BuiltinArgs p) (BuiltinArgs q) (Expr p) (Expr q)
-focusBuiltinArgs = each % _Right
 
 data BuiltinParsed = BuiltinParsed
   { name :: Text,
@@ -160,7 +162,12 @@ data Expr p
   | Literal (Literal p)
   | BraceLiteral (Fields p) (OnlyOnPhase Parsed p)
   | ArrayLiteral [Expr p] (OnlyOnPhase Typed p)
-  | StructLiteral [(Text, Expr Typed)] (HashMap Text (Expr Typed)) Type (OnlyOnPhase Typed p)
+  | StructLiteral
+      [(Text, Expr Typed)]
+      (HashMap Text (Expr Typed))
+      StructInfo
+      Text
+      (OnlyOnPhase Typed p)
   | VoidLiteral (OnlyOnPhase Typed p)
   | Error
   | EnumLiteral Text (TypeAnn p)
@@ -173,7 +180,7 @@ deriving instance (PhaseC Show p) => Show (Expr p)
 deriving instance (PhaseC Eq p) => Eq (Expr p)
 
 data Size = U8 | U16 | U32 | U64
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord, Bounded, Enum)
 
 sizeToInt :: Size -> Int
 sizeToInt size = case size of
