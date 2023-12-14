@@ -125,7 +125,7 @@ pStructLiteral = do
       )
       (char ',')
   char '}'
-  pure $ BraceLiteral fields ()
+  pure $ BraceLiteral fields
 
 pEnumLiteral :: Parser (Expr Parsed)
 pEnumLiteral = do
@@ -139,6 +139,7 @@ pType = dbg "type" do
     <|> (Void <$ pKeyword "void")
     <|> (Array <$> pArray)
     <|> (PrimInt <$> pIntType)
+    <|> customError "invalid type"
 
 pParam :: Parser (Text, Type)
 pParam = ((,) <$> pIdent <*> (char ':' *> pType))
@@ -191,10 +192,17 @@ pAt = try do
   C.char '@'
   pIdent
 
+pBuiltinArg :: Parser (BuiltinArg Parsed)
+pBuiltinArg =
+  (TypeArg <$> pType)
+    <|> (ExprArg <$> pExpr)
+    <|> (IdentArg <$> (C.char '~' *> pIdent))
+    <|> customError "builtin argument"
+
 pBuiltin :: Parser (Expr Parsed)
 pBuiltin = do
   ident <- pAt
-  argList <- parens $ sepEndBy1 (pEither pType pExpr) (char ',')
+  argList <- parens $ sepEndBy1 pBuiltinArg (char ',')
   pure $ Builtin $ BuiltinParsed ident argList
 
 pBody :: Parser [Stmt Parsed]
@@ -245,11 +253,10 @@ pSet :: Parser (Stmt Parsed)
 pSet = do
   pKeyword "set"
   e <- pExpr
-  places <- pPlaces
   char '='
   e' <- pExpr
   char ';'
-  pure $ Set (Place e places) e'
+  pure $ Set e e'
 
 pStmt :: Parser (Stmt Parsed)
 pStmt = do
@@ -260,13 +267,13 @@ pStmt = do
     <|> pLoop
     <|> (ExprStmt <$> (pExpr <* char ';'))
 
-pGetField :: Parser (PlaceContext -> PlaceContext)
+pGetField :: Parser (Expr Parsed -> Expr Parsed)
 pGetField = do
   C.char '.'
   name <- pIdent
-  pure $ \p -> GetField p name
+  pure (`GetField` name)
 
-pPlace :: Parser (PlaceContext -> PlaceContext)
+pPlace :: Parser (Expr Parsed -> Expr Parsed)
 pPlace = (Deref <$ pKeyword ".*") <|> pGetField
 
 manyPostfix :: Text -> (a -> a) -> Operator Parser a
@@ -341,25 +348,31 @@ pExpr :: Parser (Expr Parsed)
 pExpr = pExpr' >>= rest
   where
     pExpr' =
-      (Null <$ pKeyword "null")
+      (NullPtr <$ pKeyword "nullptr")
         <|> (Ref <$> (char '&' *> pExpr))
         <|> dbg "literal" (Literal <$> pLiteral)
         <|> pStructLiteral
         <|> pEnumLiteral
         <|> pBuiltin
         <|> pCall
+        <|> customError "expression"
 
-    rest e = (PlaceExpr . Place e <$> pPlaces) <|> pure e
-
-pPlaces :: Parser PlaceContext
-pPlaces = go PlaceHole
-  where
-    go p =
+    rest e =
       ( do
           f <- pPlace
-          go (f p)
+          rest (f e)
       )
-        <|> pure p
+        <|> pure e
+
+-- pPlaces :: Parser PlaceContext
+-- pPlaces = go CxHole
+--   where
+--     go p =
+--       ( do
+--           f <- pPlace
+--           go (f p)
+--       )
+--         <|> pure p
 
 pFn :: Parser (Decl Parsed)
 pFn = dbg "fn" do

@@ -63,21 +63,22 @@ genDecls decls = do
     emitLn ""
 
 toCType :: Type -> Text
-toCType ty = do
-  let go ty =
-        case ty of
-          NamedType name -> "struct " <> name.tb
-          PrimInt (IntType size signed) -> do
-            let prefix = case signed of
-                  Unsigned -> "u"
-                  Signed -> ""
-            prefix <> "int" <> (show (sizeToInt size)).tb <> "_t"
-          Void -> "void"
-          PrimBool -> "bool"
-          Pointer ty -> go ty <> "*"
-          Array ArrayType {size, ty} -> "struct{" <> go ty <> " a[" <> (show size).tb <> "];}"
-          Unknown -> error "should not get unknown"
-  TB.runBuilder . go $ ty
+toCType = TB.runBuilder . go
+  where
+    go ty =
+      case ty of
+        NamedType name -> "struct " <> name.tb
+        PrimInt (IntType size signed) -> do
+          let prefix = case signed of
+                Unsigned -> "u"
+                Signed -> ""
+          prefix <> "int" <> (show (sizeToInt size)).tb <> "_t"
+        Void -> "void"
+        PrimBool -> "bool"
+        Pointer ty -> go ty <> "*"
+        Array ArrayType {size, ty} -> "struct{" <> go ty <> " a[" <> (show size).tb <> "];}"
+        Atomic ty -> "_Atomic(" <> go ty <> ")"
+        Unknown -> error "should not get unknown"
 
 emitType :: Type -> M ()
 emitType = emit <$> toCType
@@ -86,6 +87,7 @@ genIncludes :: M ()
 genIncludes = do
   emitLn "#include <stdint.h>"
   emitLn "#include <stdbool.h>"
+  emitLn "#include <stdatomic.h>"
 
 delim :: Text -> Text -> M a -> M a
 delim d d' m = do
@@ -101,6 +103,15 @@ braces :: M a -> M a
 braces = delim "{" "}"
 
 genBuiltin :: BuiltinTyped -> M ()
+genBuiltin (BuiltinIntCast toTy _fromTy expr) = do
+  parens do
+    parens do
+      emitType (PrimInt toTy)
+    genExpr expr
+genBuiltin (BuiltinCast toTy _fromTy expr) = do
+  parens do
+    emitType toTy
+    genExpr expr
 genBuiltin (SomeBuiltin tag args) = case tag of
   Add -> bin "+"
   Mul -> bin "*"
@@ -113,7 +124,7 @@ genBuiltin (SomeBuiltin tag args) = case tag of
   _ -> todo
   where
     bin op = case args of
-      [_, Right e1, Right e2] -> do
+      [_, ExprArg e1, ExprArg e2] -> do
         genExpr e1
         emit op
         genExpr e2
@@ -128,12 +139,33 @@ genLiteral lit = case lit of
       case num of
         Decimal {num} -> do
           emit (show num).t
-        _ -> todo
-  _ -> todo
+        Hex {text} -> do
+          emit "0x"
+          emit text
+  Bool b -> emit $ if b then "true" else "false"
+  String s -> parens do
+    emit "(uint8_t *)"
+    emit "\""
+    emit s
+    emit "\""
+  Char c -> todo
 
 genExpr :: Expr Typed -> M ()
 genExpr expr = case expr of
   Builtin builtin -> genBuiltin builtin
+  Ref expr -> do
+    parens do
+      emit "&"
+      genExpr expr
+  Deref expr -> do
+    parens do
+      emit "*"
+      genExpr expr
+  GetField expr name -> do
+    parens do
+      genExpr expr
+      emit "."
+      emit name
   Call name args -> do
     case name of
       CallLocal local -> todo
@@ -144,12 +176,6 @@ genExpr expr = case expr of
         genExpr arg
   Literal lit -> genLiteral lit
   Var var -> emit $ localNameToText var
-  IntCast toTy _fromTy expr () -> do
-    parens do
-      parens do
-        emitType (PrimInt toTy)
-      genExpr expr
-  PlaceExpr (Place expr PlaceHole) -> genExpr expr
   expr -> todoMsg $ "genExpr: " ++ show expr
 
 genBody :: [Stmt Typed] -> M ()
@@ -232,4 +258,7 @@ genDecl decl = case decl of
         emit " "
         emit name
         emit ";"
+    emit ";"
   _ -> todo
+
+-- liftUndefinedNull ::

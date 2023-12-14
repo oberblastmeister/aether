@@ -4,6 +4,7 @@ import Cp.Backend.C qualified as Backend.C
 import Cp.Check qualified as Check
 import Cp.Parser qualified as Parser
 import Data.Text.IO qualified as T
+import Imports
 import System.Directory qualified as Directory
 import System.FilePath
 import System.Process.Typed qualified as Process
@@ -25,7 +26,7 @@ run dir path link = do
   case syntax of
     Left e -> putStrLn $ Parser.showError e
     Right syntax -> do
-      putStrLn $ "syntax: " ++ show syntax
+      putStrLn $ "syntax: " ++ pShowC syntax
       putStrLn "checking"
       case Check.checkProgram syntax of
         Left e -> putStrLn $ show e

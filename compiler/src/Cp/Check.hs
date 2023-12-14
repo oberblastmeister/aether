@@ -95,7 +95,7 @@ freshNameFrom name = do
   pure $ LocalName name u
 
 lookupType :: CheckState -> Text -> Bool
-lookupType st n = (has (at n) st.structs) || (has (at n) st.enums) || (has (at n) st.unions)
+lookupType st n = (has (ix n) st.structs) || (has (ix n) st.enums) || (has (ix n) st.unions)
 
 checkType :: Type -> M ()
 checkType ty = do
@@ -138,7 +138,7 @@ unifyType :: Type -> Type -> M (Maybe (Expr Typed -> Expr Typed))
 unifyType Unknown _ = pure Nothing
 unifyType _ Unknown = pure Nothing
 unifyType (PrimInt ty1@(IntType size1 signed1)) (PrimInt ty2@(IntType size2 signed2))
-  | signed1 == signed2, size1 < size2 = pure $ Just \e -> IntCast ty2 ty1 e ()
+  | signed1 == signed2, size1 < size2 = pure $ Just \e -> Builtin $ BuiltinIntCast ty2 ty1 e
   | signed1 == signed2, size1 == size2 = pure Nothing
   | otherwise = do
       checkError $ "cannot cast from ".t <> (show ty1).t <> " to ".t <> (show ty2).t
@@ -177,32 +177,32 @@ checkLiteral lit ty = do
       (ty', expr) <- inferLiteral lit
       unifyType ty' ty <&> maybeApply expr
 
-inferPlace :: Place Parsed -> M (Type, Place Typed)
-inferPlace (Place expr place) = do
-  (ty, expr) <- inferExpr expr
-  ty <- go ty place
-  pure $ (ty, Place expr place)
-  where
-    go ty place = case place of
-      Deref place -> case ty of
-        Pointer ty -> go ty place
-        _ -> do
-          expectError "pointer".t (show ty).t
-          pure Unknown
-      PlaceHole -> pure ty
-      GetField place field ->
-        case ty of
-          NamedType name -> do
-            st <- get
-            let struct = st ^?! #structs % ix name
-            case struct.fieldMap ^. at name of
-              Nothing -> do
-                checkError $ "could not field field ".t <> (show field).t <> " in struct ".t <> name
-                pure Unknown
-              Just ty -> go ty place
-          _ -> do
-            expectError "named".t (show ty).t
-            pure Unknown
+-- inferPlace :: Place Parsed -> M (Type, Place Typed)
+-- inferPlace (Place expr place) = do
+--   (ty, expr) <- inferExpr expr
+--   ty <- go ty place
+--   pure $ (ty, Place expr place)
+--   where
+--     go ty place = case place of
+--       CxDeref place -> case ty of
+--         Pointer ty -> go ty place
+--         _ -> do
+--           expectError "pointer".t (show ty).t
+--           pure Unknown
+--       CxHole -> pure ty
+--       CxGetField place field ->
+--         case ty of
+--           NamedType name -> do
+--             st <- get
+--             let struct = st ^?! #structs % ix name
+--             case struct.fieldMap ^. at name of
+--               Nothing -> do
+--                 checkError $ "could not field field ".t <> (show field).t <> " in struct ".t <> name
+--                 pure Unknown
+--               Just ty -> go ty place
+--           _ -> do
+--             expectError "named".t (show ty).t
+--             pure Unknown
 
 builtinSpec :: BuiltinTag -> BuiltinSpec
 builtinSpec tag = case tag of
@@ -220,9 +220,9 @@ builtinSpec tag = case tag of
     binNumBool = bin checkIntType (const PrimBool) 2
     bin checkTy returnTy num name =
       BuiltinSpec name \args -> case args of
-        (Left ty) : rest | length @[] rest == num -> do
+        (TypeArg ty) : rest | length @[] rest == num -> do
           _ <- checkTy ty
-          args' <- traverseOf (each % _Right) (`checkExpr` ty) args
+          args' <- traverseOf (each % #_ExprArg) (`checkExpr` ty) args
           pure $ Just (returnTy ty, args')
         _ -> do
           checkError $ "invalid arguments for ".t <> name
@@ -233,7 +233,7 @@ builtinSpec tag = case tag of
 
 data BuiltinSpec = BuiltinSpec
   { name :: Text,
-    parseArgs :: BuiltinArgs Parsed -> M (Maybe (Type, BuiltinArgs Typed))
+    parseArgs :: [BuiltinArg Parsed] -> M (Maybe (Type, [BuiltinArg Typed]))
   }
 
 builtinSpecs :: [(BuiltinTag, BuiltinSpec)]
@@ -245,7 +245,7 @@ inferWrong = (Unknown, Error)
 parseBuiltin :: BuiltinParsed -> M (Type, Expr Typed)
 parseBuiltin builtin
   | builtin.name == "cast".t,
-    [Left ty, Right expr] <- builtin.args = do
+    [TypeArg ty, ExprArg expr] <- builtin.args = do
       (ty', expr) <- inferExpr expr
       unless (isValidCastTy ty ty') do
         checkError $ "invalid cast from ".t <> (show ty').t <> " to ".t <> (show ty).t
@@ -293,7 +293,7 @@ inferExpr expr = case expr of
           else do
             args <- for (zip args (fmap snd params)) \(arg, param) -> checkExpr arg param
             pure (returnType, Call (CallTop call) args)
-  BraceLiteral fields _ -> inferBraceLiteral Nothing fields
+  BraceLiteral fields -> inferBraceLiteral Nothing fields
   Literal lit -> inferLiteral lit
   Var var ->
     lookupScope var >>= \case
@@ -302,8 +302,35 @@ inferExpr expr = case expr of
         pure (Unknown, Error)
       Just res -> pure $ Var <$> res
   Ref expr -> do
-    todo
-  PlaceExpr place -> (fmap . fmap) PlaceExpr (inferPlace place)
+    (ty, expr) <- inferExpr expr
+    case getLValue expr of
+      Nothing -> do
+        checkError $ "cannot take reference of non-lvalue".t
+        pure inferWrong
+      Just _lvalue -> pure (Pointer ty, Ref expr)
+  Deref expr -> do
+    (ty, expr) <- inferExpr expr
+    case ty of
+      Pointer ty -> pure (ty, Deref expr)
+      _ -> do
+        checkError $ "expected pointer type".t
+        pure inferWrong
+  GetField expr fieldName -> do
+    (ty, expr) <- inferExpr expr
+    st <- get
+    case ty of
+      NamedType name | Just struct <- st.structs ^? ix name -> do
+        case struct.fieldMap ^. at fieldName of
+          Nothing -> do
+            checkError $ "could not find field ".t <> (show fieldName).t <> " in struct ".t <> name
+            pure inferWrong
+          Just ty -> pure (ty, GetField expr name)
+      NamedType name -> do
+        checkError $ "could not find struct ".t <> name
+        pure inferWrong
+      _ -> do
+        checkError $ "expected named type".t
+        pure inferWrong
   Builtin builtin -> parseBuiltin builtin
   _ -> pure inferWrong
 
@@ -312,11 +339,11 @@ checkExpr expr ty = do
   traceM $ "checking expr: " ++ show expr ++ " ty: " ++ show ty
   case expr of
     Literal lit -> checkLiteral lit ty
-    PlaceExpr (Place expr place) -> do
-      case place of
-        PlaceHole -> checkExpr expr ty
-        _ -> todo
-    BraceLiteral fields () -> do
+    -- PlaceExpr (Place expr place) -> do
+    --   case place of
+    --     CxHole -> checkExpr expr ty
+    --     _ -> todo
+    BraceLiteral fields -> do
       (_, res) <- (inferBraceLiteral (Just ty) fields)
       pure res
     _ -> do
@@ -348,7 +375,7 @@ inferBraceLiteral maybeTy fields = do
   case res of
     Nothing -> do
       void $ maybeUnify Void
-      pure (Void, VoidLiteral ())
+      pure (Void, BraceLiteral VoidLiteral)
     Just (These.This fields) | Just ty <- maybeTy -> do
       st <- get
       case ty of
@@ -359,7 +386,7 @@ inferBraceLiteral maybeTy fields = do
               fields <- for fields \(name, expr, ty) -> do
                 expr <- checkExpr expr ty
                 pure (name, expr)
-              pure (ty, StructLiteral fields (HM.fromList fields) struct name ())
+              pure (ty, BraceLiteral $ StructLiteral fields (HM.fromList fields) struct name)
         NamedType name | otherwise -> do
           checkError $ "could not find struct ".t <> name
           pure inferWrong
@@ -371,7 +398,7 @@ inferBraceLiteral maybeTy fields = do
       pure inferWrong
     Just (These.That ()) -> do
       void $ maybeUnify Void
-      pure (Void, VoidLiteral ())
+      pure (Void, BraceLiteral $ VoidLiteral)
     Just (These.These _ _) -> do
       checkError "cannot mix named and unnamed fields".t
       pure inferWrong
@@ -440,7 +467,7 @@ inferLiteral lit =
 checkTypeNotDuplicate :: Text -> M ()
 checkTypeNotDuplicate name = do
   st <- get
-  traceM $ "st: " ++ show st.structs
+  traceM $ "st: " ++ pShowC st.structs
   case lookupType st name of
     True -> checkError $ ("duplicate type: ".t <> name)
     False -> pure ()
@@ -573,9 +600,17 @@ revertStmt stmt = case stmt of
   Loop body -> Loop $ revertBody body
   ExprStmt expr -> ExprStmt $ revertExpr expr
   Let var ty expr _ -> Let (revertVar var) ty (revertExpr expr) ()
-  Set place expr -> Set (revertPlace place) (revertExpr expr)
+  -- Set expr expr' -> Set (revertExpr expr) (revertExpr expr')
+  Set _ _ -> todo
   Return expr -> Return (revertExpr <$> expr)
   Break -> Break
+
+-- revertLValue :: LValue -> Place Parsed
+-- revertLValue lvalue = case lvalue of
+--   PlaceVar var -> Place (Var var) CxHole
+--   DerefLValue lvalue -> PlaceExpr $ Place (revertExpr $ DerefLValue lvalue) CxDeref CxHole
+--   DerefExpr expr -> PlaceExpr $ Place (revertExpr expr) CxDeref CxHole
+--   GetField lvalue name -> PlaceExpr $ Place (revertExpr $ GetField lvalue name) CxHole
 
 revertIfCont :: IfCont Typed -> IfCont Parsed
 revertIfCont cont = case cont of
@@ -583,11 +618,10 @@ revertIfCont cont = case cont of
   Else body -> Else (revertBody body)
   NoIfCont -> NoIfCont
 
-revertPlace :: Place Typed -> Place Parsed
-revertPlace (Place expr cx) = Place (revertExpr expr) cx
-
 revertExpr :: Expr Typed -> Expr Parsed
 revertExpr expr = case expr of
+  Deref expr -> Deref $ revertExpr expr
+  GetField expr name -> GetField (revertExpr expr) name
   As ty expr -> As ty (revertExpr expr)
   Call var exprs -> do
     let var' = case var of
@@ -595,15 +629,17 @@ revertExpr expr = case expr of
           CallLocal name -> revertVar name
     Call var' (revertExpr <$> exprs)
   Builtin builtin ->
-    Builtin case builtin of
+    case builtin of
       SomeBuiltin tag args -> do
-        let args' = args & each % _Right %~ revertExpr
+        let args' = args & each % #_ExprArg %~ revertExpr
         case findOf each ((== tag) . fst) builtinSpecs of
-          Nothing -> BuiltinParsed "__could_not_find_tag_name".t args'
-          Just (_tag, spec) -> BuiltinParsed spec.name args'
+          Nothing -> Builtin $ BuiltinParsed "__could_not_find_tag_name".t args'
+          Just (_tag, spec) -> Builtin $ BuiltinParsed spec.name args'
+      BuiltinCast ty ty' expr -> Builtin $ BuiltinParsed "cast".t [TypeArg ty, ExprArg (As ty' $ revertExpr expr)]
+      BuiltinIntCast ty _ty' expr -> As (PrimInt ty) (revertExpr expr)
   SpannedExpr expr p -> SpannedExpr (revertExpr expr) p
-  Null -> Null
-  PlaceExpr place -> PlaceExpr $ revertPlace place
+  NullPtr -> NullPtr
+  -- PlaceExpr place -> PlaceExpr $ revertPlace place
   Ref expr -> Ref $ revertExpr expr
   Literal lit -> case lit of
     String s -> Literal $ String s
@@ -613,8 +649,12 @@ revertExpr expr = case expr of
   Error -> Error
   EnumLiteral name _ -> EnumLiteral name ()
   Var var -> Var $ revertVar var
-  Cast ty ty' expr -> Cast ty ty' (revertExpr expr)
-  IntCast ty _ty' expr () -> As (PrimInt ty) (revertExpr expr)
-  ArrayLiteral exprs () -> BraceLiteral (fmap ((Nothing,) . revertExpr) exprs) ()
-  StructLiteral fields _map _info name () -> As (NamedType name) (BraceLiteral (fmap (\(name, expr) -> (Just name, revertExpr expr)) fields) ())
-  VoidLiteral () -> BraceLiteral [] ()
+  BraceLiteral (ArrayLiteral exprs) -> BraceLiteral (fmap ((Nothing,) . revertExpr) exprs)
+  BraceLiteral (StructLiteral fields _map _info name) -> As (NamedType name) (BraceLiteral (fmap (\(name, expr) -> (Just name, revertExpr expr)) fields))
+  BraceLiteral VoidLiteral -> As Void (BraceLiteral [])
+
+getLValue :: Expr Typed -> Maybe LValue
+getLValue (Var p) = Just $ LValueVar p
+getLValue (Deref expr) = Just $ LValueDeref expr
+getLValue (GetField expr name) = LValueGetField <$> (getLValue expr) <*> pure name
+getLValue _ = Nothing
