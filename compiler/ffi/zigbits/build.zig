@@ -1,4 +1,5 @@
 const std = @import("std");
+const debug = std.debug;
 
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
@@ -16,7 +17,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const lib = b.addStaticLibrary(.{
-        .name = "test_runtime",
+        .name = "zigbits",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
         .root_source_file = .{ .path = "src/main.zig" },
@@ -38,6 +39,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    main_tests.linkLibC();
 
     const run_main_tests = b.addRunArtifact(main_tests);
 

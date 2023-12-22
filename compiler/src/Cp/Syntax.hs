@@ -6,6 +6,7 @@
 module Cp.Syntax where
 
 import Data.Kind qualified as Kind
+import Data.Str (Str)
 import Imports
 import Prelude hiding (Num)
 
@@ -44,8 +45,8 @@ type PhaseC (c :: Kind.Type -> Constraint) p =
 
 data Literal p
   = String Text
-  -- TODO: make sure this is ascii
-  | Char Text
+  | -- TODO: make sure this is ascii
+    Char Text
   | Num
       (NumLiteral)
       (IntTypeAnn p)
@@ -146,19 +147,19 @@ type family BuiltinPhase p where
   BuiltinPhase Parsed = BuiltinParsed
   BuiltinPhase Typed = BuiltinTyped
 
-data LocalName = LocalName Text Int
+data LocalName = LocalName Str Int
   deriving (Show, Eq, Generic)
 
 instance Hashable LocalName
 
 localNameToText :: LocalName -> Text
-localNameToText (LocalName name id) = name <> (show id).t
+localNameToText (LocalName name id) = name.t <> (show id).t
 
 data VarResolved = VarLocal LocalName
   deriving (Show, Eq)
 
 type family Var p where
-  Var Parsed = Text
+  Var Parsed = Str
   Var Typed = LocalName
 
 data CallVarTyped = CallTop Text | CallLocal LocalName
@@ -280,6 +281,8 @@ data Stmt p
   | Loop [Stmt p]
   | ExprStmt (Expr p)
   | Let (Var p) (Maybe Type) (Expr p) (TypeAnn p)
+  | Label Text
+  | Goto Text
   | Set (ExprOrLValue p) (Expr p)
   | Return (Maybe (Expr p))
   | Break

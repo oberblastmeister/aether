@@ -12,6 +12,7 @@ import System.Process.Typed qualified as Process
 compileCFile :: FilePath -> FilePath -> [FilePath] -> IO ()
 compileCFile fp executable link = do
   Process.runProcess_ (Process.proc "zig" $ ["cc", "-std=c17", fp, "-g", "-o", executable] ++ link)
+  -- Process.runProcess_ (Process.proc "clang" $ ["-std=c17", fp, "-g", "-o", executable] ++ link)
 
 data RunOptions = RunOptions
   { dir :: FilePath,

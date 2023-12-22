@@ -4,14 +4,9 @@
 
 module Main where
 
-import Control.Monad (unless, when)
-import Control.Monad.Writer.CPS
-import Data.Foldable
-import Data.Functor (void)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Dot ()
+import Imports
 import System.Directory
 import System.Process.Typed (proc, runProcess_)
 

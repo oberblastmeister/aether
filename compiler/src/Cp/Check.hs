@@ -10,22 +10,25 @@ where
 
 import Cp.Syntax
 import Data.HashMap.Strict qualified as HM
+import Data.HashSet qualified as HS
 import Data.These qualified as These
 import Imports
+import Data.Str (Str)
 
 data Scope = Scope
   { mapping :: HashMap Text (Type, LocalName)
   }
 
 data CheckState = CheckState
-  { structs :: HashMap Text StructInfo,
-    enums :: HashMap Text EnumInfo,
-    unions :: HashMap Text UnionInfo,
-    fns :: HashMap Text FnType,
+  { structs :: HashMap Str StructInfo,
+    enums :: HashMap Str EnumInfo,
+    unions :: HashMap Str UnionInfo,
+    fns :: HashMap Str FnType,
     pos :: SourcePos,
     errors :: [CheckError],
     scopes :: [Scope],
-    unique :: Int
+    unique :: Int,
+    labels :: HashSet Text
   }
 
 data CheckError = CheckError
@@ -47,12 +50,13 @@ mkCheckState =
       pos = SourcePos 0,
       errors = [],
       scopes = [],
-      unique = 0
+      unique = 0,
+      labels = mempty
     }
 
 data CheckEnv = CheckEnv
   { inLoop :: Bool,
-    variables :: HashMap Text Type,
+    variables :: HashMap Str Type,
     returnType :: Maybe Type
   }
 
@@ -88,7 +92,7 @@ lookupScope name = do
       | otherwise = go scopes
     go [] = Nothing
 
-freshNameFrom :: Text -> M LocalName
+freshNameFrom :: Str -> M LocalName
 freshNameFrom name = do
   u <- use #unique
   #unique %= (+ 1)
@@ -516,6 +520,17 @@ checkStmt stmt returnTy = case stmt of
       Just expr -> Return . Just <$> checkExpr expr returnTy
   Break -> pure Break
   Set _ _ -> todo
+  Goto label -> do
+    labels <- use #labels
+    unless (labels ^. contains label) do
+      checkError $ "could not find label ".t <> label
+    pure $ Goto label
+  Label label -> do
+    labels <- use #labels
+    when (labels ^. contains label) do
+      checkError $ "duplicate label ".t <> label
+    #labels %= (label `HS.insert`)
+    pure $ Label label
 
 checkBody :: [Stmt Parsed] -> Type -> M [Stmt Typed]
 checkBody es ty = newScope do
@@ -571,6 +586,7 @@ checkProgram ProgramParsed {decls = declsParsed} =
     act = do
       decls <- for declsParsed \decl -> do
         #unique .= 0
+        #labels .= mempty
         checkDecl decl
       pure decls
 
@@ -600,17 +616,17 @@ revertStmt stmt = case stmt of
   Loop body -> Loop $ revertBody body
   ExprStmt expr -> ExprStmt $ revertExpr expr
   Let var ty expr _ -> Let (revertVar var) ty (revertExpr expr) ()
-  -- Set expr expr' -> Set (revertExpr expr) (revertExpr expr')
-  Set _ _ -> todo
+  Set lvalue expr' -> Set (revertLValue lvalue) (revertExpr expr')
   Return expr -> Return (revertExpr <$> expr)
   Break -> Break
+  Goto name -> Goto name
+  Label name -> Label name
 
--- revertLValue :: LValue -> Place Parsed
--- revertLValue lvalue = case lvalue of
---   PlaceVar var -> Place (Var var) CxHole
---   DerefLValue lvalue -> PlaceExpr $ Place (revertExpr $ DerefLValue lvalue) CxDeref CxHole
---   DerefExpr expr -> PlaceExpr $ Place (revertExpr expr) CxDeref CxHole
---   GetField lvalue name -> PlaceExpr $ Place (revertExpr $ GetField lvalue name) CxHole
+revertLValue :: LValue -> Expr Parsed
+revertLValue lvalue = case lvalue of
+  LValueDeref expr -> Deref $ revertExpr expr
+  LValueVar var -> Var $ revertVar var
+  LValueGetField lvalue name -> GetField (revertLValue lvalue) name
 
 revertIfCont :: IfCont Typed -> IfCont Parsed
 revertIfCont cont = case cont of

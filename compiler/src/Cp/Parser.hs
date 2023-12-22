@@ -294,7 +294,7 @@ pCall = do
       argList <- pArgList
       pure $ Call x argList
     )
-    <|> (pure $ Var x)
+    <|> (pure $ Var x.str)
 
 pEscape :: Parser String
 pEscape = do

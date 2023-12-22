@@ -1,0 +1,48 @@
+cabal-version:      3.4
+name:               ffi
+version:            0.1.0.0
+license:            MIT
+license-file:       LICENSE
+author:             brian
+maintainer:         littlebubu.shu@gmail.com
+build-type:         Custom
+extra-doc-files:    CHANGELOG.md
+
+common common-flags
+  default-language: GHC2021
+  ghc-options:
+    -Wall
+    -Wincomplete-record-updates
+    -Wredundant-constraints
+    -Wno-name-shadowing
+    -Werror=incomplete-patterns
+    -Werror=incomplete-uni-patterns
+    -Werror=missing-methods
+    -Wno-missing-signatures
+  build-depends: 
+    base >= 4.17,
+
+custom-setup
+  setup-depends:
+    base >= 4.17,
+    Cabal >= 3.10,
+    directory
+
+library
+  import: common-flags
+  exposed-modules:
+    Zigbits
+  hs-source-dirs:   src
+  extra-libraries:
+    zigbits
+
+test-suite compiler-test
+    import:           common-flags
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Main.hs
+    build-depends:
+      ffi,
+      tasty,
+      tasty-hunit,
+

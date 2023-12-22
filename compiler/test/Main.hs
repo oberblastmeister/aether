@@ -31,9 +31,6 @@ tests =
     "cp"
     [ ( testCase "first" do
           runFile "first.cp"
-      ),
-      ( testCase "second" do
-          pure ()
       )
     ]
 
