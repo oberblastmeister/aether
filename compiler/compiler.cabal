@@ -88,6 +88,9 @@ common common-flags
     these,
     bitvec,
     effectful,
+    effectful-core,
+  include-dirs:
+    src/include
 
 library
   import: common-flags
@@ -102,6 +105,7 @@ library
     Imports.Function
     Imports.Traversable
     Imports.Kind
+    Lir
     Cp
     Cp.Check
     Cp.Parser

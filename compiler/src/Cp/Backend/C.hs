@@ -1,6 +1,9 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+#include "effectful.h"
 
 module Cp.Backend.C
   ( genProgram,
@@ -11,6 +14,9 @@ import Cp.Check
 import Cp.Syntax
 import Data.Text qualified as T
 import Data.Text.Builder.Linear qualified as TB
+import Effectful
+import Effectful.Reader.Static
+import Effectful.State.Static.Local
 import Imports
 
 data GenState = GenState
@@ -27,7 +33,8 @@ data GenEnv = GenEnv
 makeFieldLabelsNoPrefix ''GenState
 makeFieldLabelsNoPrefix ''GenEnv
 
-type M = ReaderT GenEnv (State GenState)
+state (GenState)
+reader (GenEnv)
 
 mkGenState :: GenState
 mkGenState = GenState {out = mempty, scope = mempty}
@@ -35,10 +42,10 @@ mkGenState = GenState {out = mempty, scope = mempty}
 mkGenEnv :: ProgramInfo -> Bool -> GenEnv
 mkGenEnv info whitespace = GenEnv {info, whitespace, indent = 0}
 
-emit :: Text -> M ()
+emit :: (State' :> es) => Text -> Eff es ()
 emit t = #out %= (t :)
 
-emitLn :: Text -> M ()
+emitLn :: (State' :> es) => Text -> Eff es ()
 emitLn t = do
   emit t
   emit $ T.singleton '\n'
@@ -47,14 +54,15 @@ genProgram :: Bool -> ProgramTyped -> Text
 genProgram whitespace program = T.concat $ reverse st.out
   where
     ((), st) =
-      runState
-        ( runReaderT
-            (genDecls program.decls)
-            (mkGenEnv program.info whitespace)
-        )
-        mkGenState
+      runPureEff $
+        runState
+          mkGenState
+          ( runReader
+              (mkGenEnv program.info whitespace)
+              (genDecls program.decls)
+          )
 
-genDecls :: [Decl Typed] -> M ()
+genDecls :: (State' :> es) => [Decl Typed] -> Eff es ()
 genDecls decls = do
   genIncludes
   for_ decls \decl -> do
@@ -80,29 +88,29 @@ toCType = TB.runBuilder . go
         Atomic ty -> "_Atomic(" <> go ty <> ")"
         Unknown -> error "should not get unknown"
 
-emitType :: Type -> M ()
+emitType :: (State' :> es) => Type -> Eff es ()
 emitType = emit <$> toCType
 
-genIncludes :: M ()
+genIncludes :: (State' :> es) => Eff es ()
 genIncludes = do
   emitLn "#include <stdint.h>"
   emitLn "#include <stdbool.h>"
   emitLn "#include <stdatomic.h>"
 
-delim :: Text -> Text -> M a -> M a
+delim :: (State' :> es) => Text -> Text -> Eff es a -> Eff es a
 delim d d' m = do
   emit d
   x <- m
   emit d'
   pure x
 
-parens :: M a -> M a
+parens :: (State' :> es) => Eff es a -> Eff es a
 parens = delim "(" ")"
 
-braces :: M a -> M a
+braces :: (State' :> es) => Eff es a -> Eff es a
 braces = delim "{" "}"
 
-genBuiltin :: BuiltinTyped -> M ()
+genBuiltin :: (State' :> es) => BuiltinTyped -> Eff es ()
 genBuiltin (BuiltinIntCast toTy _fromTy expr) = do
   parens do
     parens do
@@ -130,7 +138,7 @@ genBuiltin (SomeBuiltin tag args) = case tag of
         genExpr e2
       _ -> error "wrong args"
 
-genLiteral :: Literal Typed -> M ()
+genLiteral :: (State' :> es) => Literal Typed -> Eff es ()
 genLiteral lit = case lit of
   Num num ty -> do
     parens do
@@ -150,7 +158,7 @@ genLiteral lit = case lit of
     emit "\""
   Char c -> todo
 
-genExpr :: Expr Typed -> M ()
+genExpr :: (State' :> es) => Expr Typed -> Eff es ()
 genExpr expr = case expr of
   Builtin builtin -> genBuiltin builtin
   Ref expr -> do
@@ -178,10 +186,10 @@ genExpr expr = case expr of
   Var var -> emit $ localNameToText var
   expr -> todoMsg $ "genExpr: " ++ show expr
 
-genBody :: [Stmt Typed] -> M ()
+genBody :: (State' :> es) => [Stmt Typed] -> Eff es ()
 genBody body = braces $ mapM_ genStmt body
 
-genIfCont :: IfCont Typed -> M ()
+genIfCont :: (State' :> es) => IfCont Typed -> Eff es ()
 genIfCont cont = case cont of
   ElseIf {cond, body, cont} -> do
     emit "else if"
@@ -193,7 +201,7 @@ genIfCont cont = case cont of
     genBody body
   NoIfCont -> pure ()
 
-genStmt :: Stmt Typed -> M ()
+genStmt :: (State' :> es) => Stmt Typed -> Eff es ()
 genStmt stmt = case stmt of
   Return e -> do
     emit "return"
@@ -222,7 +230,7 @@ genStmt stmt = case stmt of
     emit ";"
   _ -> todo
 
-commaList :: [a] -> (a -> M b) -> M ()
+commaList :: (State' :> es) => [a] -> (a -> Eff es b) -> Eff es ()
 commaList ts f = for_ (zip [0 ..] ts) \(i, t) -> do
   void $ f t
   when (i < len - 1) do
@@ -233,7 +241,7 @@ commaList ts f = for_ (zip [0 ..] ts) \(i, t) -> do
 nameToText :: LocalName -> Text
 nameToText = localNameToText
 
-genDecl :: Decl Typed -> M ()
+genDecl :: (State' :> es) => Decl Typed -> Eff es ()
 genDecl decl = case decl of
   Fn name FnInfo {fnType = FnType {params = paramTypes, returnType}, params, body} -> do
     -- emit "static inline "
@@ -260,5 +268,3 @@ genDecl decl = case decl of
         emit ";"
     emit ";"
   _ -> todo
-
--- liftUndefinedNull ::

@@ -1,5 +1,8 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+#include "effectful.h"
 
 module Cp.Check
   ( ProgramInfo (..),
@@ -13,7 +16,10 @@ import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
 import Data.Str (Str)
 import Data.These qualified as These
-import Imports
+import Effectful
+import Effectful.Reader.Static
+import Effectful.State.Static.Local
+import Imports hiding (Reader, State, ask, get, modify, put, runReader, runState)
 
 data Scope = Scope
   { mapping :: HashMap Str (Type, LocalName)
@@ -68,48 +74,49 @@ mkCheckEnv =
       returnType = Nothing
     }
 
-type M = ReaderT CheckEnv (State CheckState)
+state (CheckState)
+reader (CheckEnv)
 
-checkLog :: String -> M ()
+checkLog :: String -> Eff es ()
 -- checkLog t = do
---   pos <- use #pos
+--   pos <- use' #pos
 --   traceM $ show pos ++ ": " ++ t
 checkLog = const $ pure ()
 
-newScope :: M a -> M a
+newScope :: (State' :> es) => Eff es a -> Eff es a
 newScope m = do
   #scopes %= (Scope {mapping = mempty} :)
   x <- m
-  use #scopes >>= \case
+  use' #scopes >>= \case
     _ : scopes -> do
       #scopes .= scopes
       pure x
     [] -> error "should not have empty scope"
 
-addScope :: Str -> (Type, LocalName) -> M ()
+addScope :: (State' :> es) => Str -> (Type, LocalName) -> Eff es ()
 addScope name localName = #scopes % _head % #mapping % at name .= Just localName
 
-lookupScope :: Str -> M (Maybe (Type, LocalName))
+lookupScope :: (State' :> es) => Str -> Eff es (Maybe (Type, LocalName))
 lookupScope name = do
-  go <$> use #scopes
+  go <$> use' #scopes
   where
     go (scope : scopes)
       | Just name' <- scope ^. #mapping % at name = Just name'
       | otherwise = go scopes
     go [] = Nothing
 
-freshNameFrom :: Str -> M LocalName
+freshNameFrom :: (State' :> es) => Str -> Eff es LocalName
 freshNameFrom name = do
-  u <- use #unique
+  u <- use' #unique
   #unique %= (+ 1)
   pure $ LocalName name u
 
 lookupType :: CheckState -> Str -> Bool
 lookupType st n = (has (ix n) st.structs) || (has (ix n) st.enums) || (has (ix n) st.unions)
 
-checkType :: Type -> M ()
+checkType :: (State' :> es) => Type -> Eff es ()
 checkType ty = do
-  st <- get
+  st <- get'
   case ty of
     NamedType name -> case lookupType st name of
       True -> pure ()
@@ -117,9 +124,9 @@ checkType ty = do
     Pointer ty -> checkType ty
     _ -> pure ()
 
-checkError :: Text -> M ()
+checkError :: (State' :> es) => Text -> Eff es ()
 checkError error = do
-  pos <- use #pos
+  pos <- use' #pos
   #errors %= (CheckError {error, pos} :)
 
 findDuplicate :: forall a. [(Str, a)] -> Either Str (HashMap Str a)
@@ -131,12 +138,12 @@ findDuplicate = go (Empty :: HashMap Str a)
         else go (m & at t .~ Just x) ts
     go m [] = Right m
 
-checkDuplicate :: [(Str, a)] -> (Text -> Text) -> M ()
+checkDuplicate :: (State' :> es) => [(Str, a)] -> (Text -> Text) -> Eff es ()
 checkDuplicate ts msg = case findDuplicate ts of
   Right _ -> pure ()
   Left t -> checkError (msg t.t)
 
-eitherToM :: Either Text a -> M (Maybe a)
+eitherToM :: (State' :> es) => Either Text a -> Eff es (Maybe a)
 eitherToM = \case
   Left t -> do
     checkError t
@@ -144,7 +151,7 @@ eitherToM = \case
   Right a -> pure $ Just a
 
 -- actual, expected
-unifyType :: Type -> Type -> M (Maybe (Expr Typed -> Expr Typed))
+unifyType :: (State' :> es) => Type -> Type -> Eff es (Maybe (Expr Typed -> Expr Typed))
 unifyType Unknown _ = pure Nothing
 unifyType _ Unknown = pure Nothing
 unifyType (PrimInt ty1@(IntType size1 signed1)) (PrimInt ty2@(IntType size2 signed2))
@@ -161,14 +168,14 @@ unifyType ty1 ty2 = do
 u8Ty :: Type
 u8Ty = PrimInt (IntType U8 Unsigned)
 
-expectError :: Text -> Text -> M ()
+expectError :: (State' :> es) => Text -> Text -> Eff es ()
 expectError actual expected = checkError $ "expected ".t <> expected <> ", got ".t <> actual
 
 maybeApply :: a -> Maybe (a -> a) -> a
 maybeApply x Nothing = x
 maybeApply x (Just f) = f x
 
-checkLiteral :: Literal Parsed -> Type -> M (Expr Typed)
+checkLiteral :: (State' :> es) => Literal Parsed -> Type -> Eff es (Expr Typed)
 checkLiteral lit ty = do
   checkLog "checking literal"
   case lit of
@@ -228,6 +235,7 @@ builtinSpec tag = case tag of
   where
     binNum = bin checkIntType id 2
     binNumBool = bin checkIntType (const PrimBool) 2
+    bin :: (forall es. (State' :> es) => Type -> Eff es ()) -> (Type -> Type) -> Int -> Str -> BuiltinSpec
     bin checkTy returnTy num name =
       BuiltinSpec name \args -> case args of
         (TypeArg ty) : rest | length @[] rest == num -> do
@@ -237,13 +245,14 @@ builtinSpec tag = case tag of
         _ -> do
           checkError $ "invalid arguments for ".t <> name.t
           pure Nothing
+    checkIntType :: (State' :> es) => Type -> Eff es ()
     checkIntType ty = case ty of
       PrimInt _ -> pure ()
       _ -> checkError $ "expected int type".t
 
 data BuiltinSpec = BuiltinSpec
   { name :: Str,
-    parseArgs :: [BuiltinArg Parsed] -> M (Maybe (Type, [BuiltinArg Typed]))
+    parseArgs :: forall es. (State' :> es) => [BuiltinArg Parsed] -> Eff es (Maybe (Type, [BuiltinArg Typed]))
   }
 
 builtinSpecs :: [(BuiltinTag, BuiltinSpec)]
@@ -252,7 +261,7 @@ builtinSpecs = (\tag -> (tag, builtinSpec tag)) <$> [minBound :: BuiltinTag .. m
 inferWrong :: (Type, Expr p)
 inferWrong = (Unknown, Error)
 
-parseBuiltin :: BuiltinParsed -> M (Type, Expr Typed)
+parseBuiltin :: (State' :> es) => BuiltinParsed -> Eff es (Type, Expr Typed)
 parseBuiltin builtin
   | builtin.name == "cast".str,
     [TypeArg ty, ExprArg expr] <- builtin.args = do
@@ -265,8 +274,8 @@ parseBuiltin builtin
         Nothing -> do
           checkError $ "could not find builtin ".t <> builtin.name.t
           pure inferWrong
-        Just (tag, spec) -> do
-          spec.parseArgs builtin.args >>= \case
+        Just (tag, BuiltinSpec {parseArgs}) -> do
+          parseArgs builtin.args >>= \case
             Nothing -> do
               checkError $ "invalid arguments for ".t <> builtin.name.t
               pure inferWrong
@@ -281,10 +290,10 @@ parseBuiltin builtin
       _ -> False
     findRes = findOf each (\(_tag, spec) -> spec.name == builtin.name) builtinSpecs
 
-inferExpr :: Expr Parsed -> M (Type, Expr Typed)
+inferExpr :: (State' :> es) => Expr Parsed -> Eff es (Type, Expr Typed)
 inferExpr expr = case expr of
   Call call args -> do
-    fn <- use (#fns % at call)
+    fn <- use' (#fns % at call)
     case fn of
       Nothing -> do
         checkError $ "could not find function ".t <> call.t
@@ -327,7 +336,7 @@ inferExpr expr = case expr of
         pure inferWrong
   GetField expr fieldName -> do
     (ty, expr) <- inferExpr expr
-    st <- get
+    st <- get'
     case ty of
       NamedType name | Just struct <- st.structs ^? ix name -> do
         case struct.fieldMap ^. at fieldName of
@@ -344,7 +353,7 @@ inferExpr expr = case expr of
   Builtin builtin -> parseBuiltin builtin
   _ -> pure inferWrong
 
-checkExpr :: Expr Parsed -> Type -> M (Expr Typed)
+checkExpr :: (State' :> es) => Expr Parsed -> Type -> Eff es (Expr Typed)
 checkExpr expr ty = do
   checkLog $ "checking expr: " ++ show expr ++ " ty: " ++ show ty
   case expr of
@@ -360,9 +369,9 @@ checkExpr expr ty = do
       (ty', expr) <- inferExpr expr
       unifyType ty' ty <&> maybeApply expr
 
-getStructPartial :: (HasCallStack) => Type -> M (StructInfo)
+getStructPartial :: ((State' :> es), HasCallStack) => Type -> Eff es (StructInfo)
 getStructPartial ty = do
-  st <- get
+  st <- get'
   let !struct = st.structs ^?! ix (ty ^?! #_NamedType)
   pure struct
 
@@ -380,14 +389,14 @@ checkFieldsOkay fields fieldTypes =
       pure together
     Left name -> Left $ "duplicate field name: ".t <> (show name).t
 
-inferBraceLiteral :: Maybe Type -> Fields Parsed -> M (Type, Expr Typed)
+inferBraceLiteral :: (State' :> es) => Maybe Type -> Fields Parsed -> Eff es (Type, Expr Typed)
 inferBraceLiteral maybeTy fields = do
   case res of
     Nothing -> do
       void $ maybeUnify Void
       pure (Void, BraceLiteral VoidLiteral)
     Just (These.This fields) | Just ty <- maybeTy -> do
-      st <- get
+      st <- get'
       case ty of
         NamedType name | Just struct <- st.structs ^? ix name -> do
           eitherToM (checkFieldsOkay fields struct.fieldMap) >>= \case
@@ -446,7 +455,7 @@ literalInBounds i (IntType size signed) = low <= i && i <= high
   where
     (low, high) = intTypeBounds (IntType size signed)
 
-inferLiteral :: Literal Parsed -> M (Type, Expr Typed)
+inferLiteral :: (State' :> es) => Literal Parsed -> Eff es (Type, Expr Typed)
 inferLiteral lit =
   case lit of
     String s -> pure $ (Pointer u8Ty, Literal $ String s)
@@ -474,15 +483,15 @@ inferLiteral lit =
               pure (PrimInt ty, Literal $ Num num ty)
     Bool b -> pure (PrimBool, Literal $ Bool b)
 
-checkTypeNotDuplicate :: Str -> M ()
+checkTypeNotDuplicate :: (State' :> es) => Str -> Eff es ()
 checkTypeNotDuplicate name = do
-  st <- get
+  st <- get'
   checkLog $ "st: " ++ pShowC st.structs
   case lookupType st name of
     True -> checkError $ ("duplicate type: ".t <> name.t)
     False -> pure ()
 
-checkCont :: IfCont Parsed -> Type -> M (IfCont Typed)
+checkCont :: (State' :> es) => IfCont Parsed -> Type -> Eff es (IfCont Typed)
 checkCont ic ty = case ic of
   ElseIf {cond, body, cont} -> do
     cond <- checkExpr cond PrimBool
@@ -495,7 +504,7 @@ checkCont ic ty = case ic of
   NoIfCont -> pure NoIfCont
 
 -- the type is the type of the return
-checkStmt :: Stmt Parsed -> Type -> M (Stmt Typed)
+checkStmt :: (State' :> es) => Stmt Parsed -> Type -> Eff es (Stmt Typed)
 checkStmt stmt returnTy = case stmt of
   If cond body cont -> do
     cond <- checkExpr cond PrimBool
@@ -527,22 +536,22 @@ checkStmt stmt returnTy = case stmt of
   Break -> pure Break
   Set _ _ -> todo
   Goto label -> do
-    labels <- use #labels
+    labels <- use' #labels
     unless (labels ^. contains label) do
       checkError $ "could not find label ".t <> label.t
     pure $ Goto label
   Label label -> do
-    labels <- use #labels
+    labels <- use' #labels
     when (labels ^. contains label) do
       checkError $ "duplicate label ".t <> label.t
     #labels %= (label `HS.insert`)
     pure $ Label label
 
-checkBody :: [Stmt Parsed] -> Type -> M [Stmt Typed]
+checkBody :: (State' :> es) => [Stmt Parsed] -> Type -> Eff es [Stmt Typed]
 checkBody es ty = newScope do
   mapM (`checkStmt` ty) es
 
-checkDecl :: Decl Parsed -> M (Decl Typed)
+checkDecl :: (State' :> es) => Decl Parsed -> Eff es (Decl Typed)
 checkDecl d = do
   case d of
     Union name info@UnionInfo {unions} -> do
@@ -588,7 +597,7 @@ checkProgram ProgramParsed {decls = declsParsed} =
     errors -> Left errors
   where
     info = ProgramInfo {structs = st.structs, enums = st.enums, unions = st.unions, fns = st.fns}
-    (decls, st) = runState (runReaderT act mkCheckEnv) mkCheckState
+    (decls, st) = runPureEff (runState mkCheckState (runReader mkCheckEnv act))
     act = do
       decls <- for declsParsed \decl -> do
         #unique .= 0
