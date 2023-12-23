@@ -56,11 +56,6 @@ deriving instance (PhaseC Show p) => Show (Literal p)
 
 deriving instance (PhaseC Eq p) => Eq (Literal p)
 
--- builtinFromText :: Text -> Maybe Builtin
--- builtinFromText = \case
---   "not" -> Just BuiltinNot
---   _ -> Nothing
-
 data PlaceContext
   = CxGetField PlaceContext Text
   | CxDeref PlaceContext
@@ -77,7 +72,7 @@ class SingPhase (p :: Phase) where
   singPhase :: SPhase p
 
 data BuiltinParsed = BuiltinParsed
-  { name :: Text,
+  { name :: Str,
     args :: [BuiltinArg Parsed]
   }
   deriving (Show, Eq)
@@ -120,18 +115,10 @@ data BuiltinTag
   | AtomicFetchAdd
   deriving (Show, Eq, Enum, Bounded)
 
--- data AtomicOrdering
---   = AtomicOrderingRelaxed
---   | AtomicOrderingAcquire
---   | AtomicOrderingRelease
---   | AtomicOrderingAcqRel
---   | AtomicOrderingSeqCst
---   deriving (Show, Eq, Enum, Bounded)
-
 data BuiltinArg p
   = TypeArg Type
   | ExprArg (Expr p)
-  | IdentArg Text
+  | IdentArg Str
 
 deriving instance (PhaseC Show p) => Show (BuiltinArg p)
 
@@ -162,26 +149,22 @@ type family Var p where
   Var Parsed = Str
   Var Typed = LocalName
 
-data CallVarTyped = CallTop Text | CallLocal LocalName
+data CallVarTyped = CallTop Str | CallLocal LocalName
   deriving (Show, Eq)
 
 type family CallVar p where
-  CallVar Parsed = Text
+  CallVar Parsed = Str
   CallVar Typed = CallVarTyped
 
 data LValue
   = LValueDeref (Expr Typed)
-  | LValueGetField LValue Text
+  | LValueGetField LValue Str
   | LValueVar (Var Typed)
   deriving (Show, Eq)
 
 type family ExprOrLValue p where
   ExprOrLValue Parsed = Expr Parsed
   ExprOrLValue Typed = LValue
-
--- deriving instance (PhaseC Show p) => Show (Place p)
-
--- deriving instance (PhaseC Eq p) => Eq (Place p)
 
 type family OnlyOnPhase p q where
   OnlyOnPhase Parsed Parsed = ()
@@ -195,10 +178,10 @@ type family BraceLiteral p where
 data BraceTyped
   = ArrayLiteral [Expr Typed]
   | StructLiteral
-      [(Text, Expr Typed)]
-      (HashMap Text (Expr Typed))
+      [(Str, Expr Typed)]
+      (HashMap Str (Expr Typed))
       StructInfo
-      Text
+      Str
   | VoidLiteral
   deriving (Show, Eq)
 
@@ -207,17 +190,17 @@ data Expr p
   | Builtin (BuiltinPhase p)
   | SpannedExpr (Expr p) SourcePos
   | Deref (Expr p)
-  | GetField (Expr p) Text
+  | GetField (Expr p) Str
   | As Type (Expr p)
   | NullPtr
   | Ref (Expr p)
   | Literal (Literal p)
   | BraceLiteral (BraceLiteral p)
   | Error
-  | EnumLiteral Text (TypeAnn p)
+  | EnumLiteral Str (TypeAnn p)
   | Var (Var p)
 
-type Fields p = [(Maybe Text, (Expr p))]
+type Fields p = [(Maybe Str, (Expr p))]
 
 deriving instance (PhaseC Show p) => Show (Expr p)
 
@@ -233,9 +216,6 @@ sizeToInt size = case size of
   U32 -> 32
   U64 -> 64
 
--- sizeToBounds :: Size -> (Integer, Integer)
--- sizeToBounds size = case size of
-
 data Signedness = Signed | Unsigned
   deriving (Show, Eq)
 
@@ -249,7 +229,7 @@ data ArrayType = ArrayType
   deriving (Show, Eq)
 
 data Type
-  = NamedType Text
+  = NamedType Str
   | PrimInt IntType
   | PrimBool
   | Pointer Type
@@ -272,17 +252,13 @@ deriving instance (PhaseC Show p) => Show (IfCont p)
 
 deriving instance (PhaseC Eq p) => Eq (IfCont p)
 
--- data PhaseMaybe :: Phase -> Type -> Type where
---   PhaseJust :: forall p a. a -> PhaseMaybe p a
---   PhaseNothing :: forall p a. PhaseMaybe p a
-
 data Stmt p
   = If (Expr p) [Stmt p] (IfCont p)
   | Loop [Stmt p]
   | ExprStmt (Expr p)
   | Let (Var p) (Maybe Type) (Expr p) (TypeAnn p)
-  | Label Text
-  | Goto Text
+  | Label Str
+  | Goto Str
   | Set (ExprOrLValue p) (Expr p)
   | Return (Maybe (Expr p))
   | Break
@@ -292,24 +268,24 @@ deriving instance (PhaseC Show p) => Show (Stmt p)
 deriving instance (PhaseC Eq p) => Eq (Stmt p)
 
 data StructInfo = StructInfo
-  { fields :: [(Text, Type)],
-    fieldMap :: HashMap Text Type
+  { fields :: [(Str, Type)],
+    fieldMap :: HashMap Str Type
   }
   deriving (Show, Eq)
 
 data UnionInfo = UnionInfo
-  { unions :: [(Text, Type)]
+  { unions :: [(Str, Type)]
   }
   deriving (Show, Eq)
 
 data EnumInfo = EnumInfo
   { repType :: IntType,
-    tags :: [(Text, Maybe NumLiteral)]
+    tags :: [(Str, Maybe NumLiteral)]
   }
   deriving (Show, Eq)
 
 data FnType = FnType
-  { params :: [(Text, Type)],
+  { params :: [(Str, Type)],
     returnType :: Type
   }
   deriving (Show, Eq)
@@ -325,10 +301,10 @@ deriving instance (PhaseC Show p) => Show (FnInfo p)
 deriving instance (PhaseC Eq p) => Eq (FnInfo p)
 
 data Decl p
-  = Struct Text StructInfo
-  | Fn Text (FnInfo p)
-  | Enum Text (EnumInfo)
-  | Union Text (UnionInfo)
+  = Struct Str StructInfo
+  | Fn Str (FnInfo p)
+  | Enum Str (EnumInfo)
+  | Union Str (UnionInfo)
   | SpannedDecl (Decl p) SourcePos
 
 deriving instance (PhaseC Show p) => Show (Decl p)
@@ -341,10 +317,10 @@ data ProgramParsed = ProgramParsed
   deriving (Show, Eq)
 
 data ProgramInfo = ProgramInfo
-  { structs :: HashMap Text (StructInfo),
-    enums :: HashMap Text (EnumInfo),
-    unions :: HashMap Text (UnionInfo),
-    fns :: HashMap Text FnType
+  { structs :: HashMap Str (StructInfo),
+    enums :: HashMap Str (EnumInfo),
+    unions :: HashMap Str (UnionInfo),
+    fns :: HashMap Str FnType
   }
   deriving (Show, Eq)
 
@@ -357,38 +333,3 @@ data ProgramTyped = ProgramTyped
 makePrismLabels ''Type
 makeFieldLabelsNoPrefix ''StructInfo
 makePrismLabels ''BuiltinArg
-
--- plateExpr :: forall p. (SingPhase p) => Traversal (Expr p) (Expr p) (Expr p) (Expr p)
--- plateExpr = traversalVL \f expr -> case expr of
---   Call var args -> Call var <$> traverse f args
---   Builtin builtin
---     | SParsed <- singP,
---       let (BuiltinParsed name args) = builtin ->
---         Builtin . BuiltinParsed name <$> traverseOf (traversed % #_ExprArg) f args
---     | STyped <- singP ->
---         Builtin <$> case builtin of
---           SomeBuiltin tag args -> SomeBuiltin tag <$> traverseOf (traversed % #_ExprArg) f args
---           BuiltinCast from to expr -> BuiltinCast from to <$> f expr
---           BuiltinIntCast from to expr -> BuiltinIntCast from to <$> f expr
---   SpannedExpr expr pos -> SpannedExpr <$> f expr <*> pure pos
---   As ty expr -> As ty <$> f expr
---   Null -> pure Null
---   PlaceExpr (Place expr cx) -> PlaceExpr <$> (Place <$> f expr <*> pure cx)
---   Ref expr -> Ref <$> f expr
---   Literal lit ->
---     pure $ Literal lit
---   BraceLiteral lit
---     | SParsed <- singP -> BraceLiteral <$> (traverseOf (traversed % _2) f lit)
---     | STyped <- singP ->
---         BraceLiteral <$> case lit of
---           ArrayLiteral exprs -> ArrayLiteral <$> traverse f exprs
---           StructLiteral fields fieldMap info tag -> do
---             fields' <- traverseOf (traversed % _2) f fields
---             fieldMap' <- traverse f fieldMap
---             pure $ StructLiteral fields' fieldMap' info tag
---           VoidLiteral -> pure VoidLiteral
---   Error -> pure Error
---   EnumLiteral name ty -> pure $ EnumLiteral name ty
---   Var var -> pure $ Var var
---   where
---     singP = singPhase @p

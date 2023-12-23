@@ -6,15 +6,16 @@ module Data.Str
   )
 where
 
+import Data.ByteString (ByteString)
+import Data.ByteString.Short qualified as BS
 import Data.Hashable (Hashable (..))
-import Data.Int (Int64)
 import Data.Intern
-import Data.Primitive
 import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.TextUtils qualified as TextUtils
 import Data.ToInt (ToInt (..))
+import Data.Word
 import GHC.Records (HasField (..))
 
 instance HasField "str" Text Str where
@@ -33,30 +34,38 @@ instance HasField "s" Str String where
   getField = T.unpack . getText
   {-# INLINE getField #-}
 
-data Str = Str ByteArray Int64
+newtype Str = Str Word64
 
 instance Show Str where
-  show (Str bs _) = show (TextUtils.unsafeEncodeByteArrayUtf8 bs)
+  show = show . getText
   {-# INLINE show #-}
 
 instance Eq Str where
-  Str _t1 i1 == Str _t2 i2 = i1 == i2
+  (Str w) == (Str w') = w == w'
   {-# INLINE (==) #-}
 
 instance ToInt Str where
-  toInt (Str _t i) = fromIntegral i
+  toInt (Str w) = fromIntegral w
   {-# INLINE toInt #-}
 
 instance Hashable Str where
-  hashWithSalt salt (Str _t i) = hashWithSalt salt i
+  hashWithSalt salt (Str w) = hashWithSalt salt w
   {-# INLINE hashWithSalt #-}
 
 instance IsString Str where
-  fromString s = Str bs (internByteArray bs 0 (sizeofByteArray bs))
+  fromString s = Str (internByteArray bs off len)
     where
-      bs = TextUtils.copyTextBytes (T.pack s)
+      (TextUtils.UnsafeTextSlice bs off len) = T.pack s
   {-# INLINE fromString #-}
 
 getText :: Str -> Text
-getText (Str bs _) = TextUtils.unsafeEncodeByteArrayUtf8 bs
+getText = TextUtils.unsafeText . TextUtils.unShort . toShort
 {-# INLINE getText #-}
+
+toShort :: Str -> BS.ShortByteString
+toShort = BS.toShort . toBS
+{-# INLINE toShort #-}
+
+toBS :: Str -> ByteString
+toBS (Str w) = unsafeResolveByteString w
+{-# INLINE toBS #-}

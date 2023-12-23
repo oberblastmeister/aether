@@ -1,10 +1,15 @@
+{-# LANGUAGE MagicHash #-}
+
 module Data.TextUtils
   ( copyTextBytes,
-    unsafeEncodeByteArrayUtf8,
-    pattern TextUtf8,
+    pattern UnsafeTextSlice,
+    unsafeText,
+    pattern Short,
+    unShort,
   )
 where
 
+import Data.ByteString.Short (ShortByteString (..))
 import Data.Primitive.ByteArray
 import Data.Text.Internal qualified as T.Internal
 import Imports
@@ -16,11 +21,25 @@ copyTextBytes (T.Internal.Text bs offset len) = runByteArray $ do
   pure mba
 {-# INLINE copyTextBytes #-}
 
-pattern TextUtf8 :: ByteArray -> Int -> Int -> Text
-pattern TextUtf8 bs offset len <- T.Internal.Text bs (offset) (len)
+unsafeText :: ByteArray -> Text
+unsafeText bs = T.Internal.Text bs 0 (sizeofByteArray bs)
+{-# INLINE unsafeText #-}
 
-{-# COMPLETE TextUtf8 #-}
+pattern UnsafeTextSlice :: ByteArray -> Int -> Int -> Text
+pattern UnsafeTextSlice bs off len = T.Internal.Text bs off len
+{-# INLINE UnsafeTextSlice #-}
 
-unsafeEncodeByteArrayUtf8 :: ByteArray -> Text
-unsafeEncodeByteArrayUtf8 bs = T.Internal.Text bs 0 (sizeofByteArray bs)
-{-# INLINE unsafeEncodeByteArrayUtf8 #-}
+{-# COMPLETE UnsafeTextSlice #-}
+
+pattern Short :: ByteArray -> ShortByteString
+pattern Short bs <- (SBS (ByteArray -> bs))
+  where
+    Short (ByteArray bs#) = SBS bs#
+
+{-# COMPLETE Short #-}
+
+{-# INLINE Short #-}
+
+unShort :: ShortByteString -> ByteArray
+unShort (Short bs) = bs
+{-# INLINE unShort #-}

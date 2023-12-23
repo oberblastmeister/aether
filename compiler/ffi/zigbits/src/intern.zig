@@ -22,16 +22,18 @@ pub const Interner = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: Allocator) !Interner {
+    fn calculate_shard_amount() !usize {
         const cpu_count = if (Thread.getCpuCount()) |it| it else |_| 1;
-        const num_shards = try math.ceilPowerOfTwo(usize, cpu_count * 4);
+        return try math.ceilPowerOfTwo(usize, cpu_count * 4);
+    }
+
+    pub fn init(allocator: Allocator) !Interner {
+        const num_shards = try calculate_shard_amount();
         return try Interner.init_with(num_shards, allocator);
     }
 
     pub fn init_with(shard_amount: usize, allocator: Allocator) !Interner {
-        // debug.print("shard amoutn: {}\n", .{shard_amount});
         const shift: u6 = @truncate(@typeInfo(usize).Int.bits - @ctz(shard_amount));
-        // debug.print("shift: {}\n", .{shift});
         const shards = try allocator.alloc(InternShard, shard_amount);
         const locks = try allocator.alloc(RwLock, shard_amount);
         for (0..shard_amount) |i| {
@@ -49,65 +51,66 @@ pub const Interner = struct {
         return @truncate(hash >> self.shift);
     }
 
+    pub fn resolve(self: *Self, symbol: Symbol) []const u8 {
+        const shard = symbol.shard;
+        const lock = &self.locks[shard];
+        lock.lockShared();
+        defer lock.unlockShared();
+        return self.shards[shard].resolve(symbol.id);
+    }
+
     pub fn get_or_intern(self: *Self, allocator: Allocator, string: []const u8) !Symbol {
         const hash = WyHash.hash(0, string);
         const shard = self.determine_shard(hash);
         const lock = &self.locks[shard];
         lock.lockShared();
+        const res = self.shards[shard].get(hash, string);
+        lock.unlockShared();
         const id = label: {
-            if (self.shards[shard].get(string, hash)) |it| {
-                lock.unlockShared();
+            if (res) |it| {
                 break :label it;
             } else {
-                lock.unlockShared();
                 lock.lock();
                 defer lock.unlock();
-                break :label try self.shards[shard].get_or_intern(allocator, string, hash);
+                break :label try self.shards[shard].intern(allocator, hash, string);
             }
         };
-        return .{ .shard = shard, .id = id };
+        return .{ .len = @intCast(string.len), .shard = shard, .id = id };
     }
 };
 
-pub const Symbol = struct {
-    shard: u32,
-    id: u32,
+const Id = u28;
 
-    pub inline fn to_u64(self: Symbol) u64 {
-        return @as(u64, self.shard) << 32 | self.id;
-    }
+pub const Symbol = packed struct {
+    id: Id,
+    shard: u16,
+    len: u20,
 };
 
 const InternShard = struct {
+    frozen: ArrayListUnmanaged([]const u8) = .{},
     buffer: ArrayListUnmanaged(u8) = .{},
-    ends: ArrayListUnmanaged(u32) = .{},
-    map: HashMapUnmanaged(u32, void, Context, 80) = .{},
-    next_id: u32 = 0,
+    strings: ArrayListUnmanaged([]const u8) = .{},
+    map: HashMapUnmanaged(Id, void, Context, 80) = .{},
 
     const Self = @This();
 
     pub const Context = struct {
-        buffer: []u8,
-        ends: []u32,
+        strings: [][]const u8,
 
-        pub fn resolve_string(self: *const Context, symbol: u32) []u8 {
-            const from = if (symbol == 0) 0 else self.ends[symbol - 1];
-            const to = self.ends[symbol];
-            return self.buffer[from..to];
+        pub fn hash(self: Context, id: Id) u64 {
+            return WyHash.hash(0, self.strings[id]);
         }
 
-        pub fn hash(self: Context, symbol1: u32) u64 {
-            return WyHash.hash(0, self.resolve_string(symbol1));
-        }
-
-        pub fn eql(self: Context, symbol1: u32, symbol2: u32) bool {
-            return mem.eql(u8, self.resolve_string(symbol1), self.resolve_string(symbol2));
+        pub fn eql(self: Context, id1: Id, id2: Id) bool {
+            return mem.eql(u8, self.strings[id1], self.strings[id2]);
         }
     };
 
     pub const KeyContext = struct {
         cached_hash: u64,
-        cxt: Context,
+        string: []const u8,
+        context: Context,
 
         pub fn hash(self: KeyContext, string: []const u8) u64 {
             _ = string;
@@ -115,47 +118,59 @@ const InternShard = struct {
             return self.cached_hash;
         }
 
-        pub fn eql(self: KeyContext, string: []const u8, id: u32) bool {
-            return mem.eql(u8, string, self.cxt.resolve_string(id));
+        pub fn eql(self: KeyContext, string: []const u8, id: Id) bool {
+            return mem.eql(u8, string, self.context.strings[id]);
         }
     };
 
     pub fn context(self: *Self) Context {
         return .{
-            .buffer = self.buffer.items,
-            .ends = self.ends.items,
+            .strings = self.strings.items,
         };
     }
 
-    pub fn key_context(self: *Self, hash: u64) KeyContext {
+    pub fn key_context(self: *Self, hash: u64, string: []const u8) KeyContext {
         return .{
             .cached_hash = hash,
-            .cxt = self.context(),
+            .string = string,
+            .context = self.context(),
         };
     }
 
-    pub fn get(self: *Self, string: []const u8, hash: u64) ?u32 {
-        return self.map.getKeyAdapted(string, self.key_context(hash));
+    pub fn get(self: *Self, hash: u64, string: []const u8) ?Id {
+        return self.map.getKeyAdapted(string, self.key_context(hash, string));
     }
 
-    pub fn get_or_intern(self: *Self, allocator: Allocator, string: []const u8, hash: u64) !u32 {
-        const id = self.next_id;
-        self.next_id += 1;
+    pub fn resolve(self: *Self, id: Id) []const u8 {
+        return self.strings.items[id];
+    }
+
+    pub fn intern(self: *Self, allocator: Allocator, hash: u64, string: []const u8) !Id {
+        const id: Id = @intCast(self.strings.items.len);
+        const new_string = try self.alloc(allocator, string);
+        try self.strings.append(allocator, new_string);
         const res = try self.map.getOrPutContextAdapted(
             allocator,
-            string,
-            self.key_context(hash),
+            new_string,
+            self.key_context(hash, string),
             self.context(),
         );
-        if (res.found_existing) {
-            return res.key_ptr.*;
-        } else {
-            res.key_ptr.* = id;
-            try self.buffer.appendSlice(allocator, string);
-            const to = self.buffer.items.len;
-            try self.ends.append(allocator, @truncate(to));
-            return id;
+        debug.assert(!res.found_existing);
+        res.key_ptr.* = id;
+        return id;
+    }
+
+    fn alloc(self: *Self, allocator: Allocator, string: []const u8) ![]const u8 {
+        const cap = self.buffer.capacity;
+        if (cap < self.buffer.items.len + string.len) {
+            const new_cap = try math.ceilPowerOfTwo(usize, @max(cap, string.len) + 1);
+            var buffer = try ArrayListUnmanaged(u8).initCapacity(allocator, new_cap);
+            mem.swap(@TypeOf(buffer), &buffer, &self.buffer);
+            try self.frozen.append(allocator, @constCast(buffer.items));
         }
+        const start = self.buffer.items.len;
+        self.buffer.appendSliceAssumeCapacity(string);
+        return self.buffer.items[start..][0..string.len];
     }
 };
 
@@ -172,11 +187,12 @@ test "basic" {
 
 test "repeat" {
     const testing = std.testing;
-    const s = "asdfasdf";
+    const s: []const u8 = "asdfasdf";
     const allocator = std.heap.c_allocator;
     var interner = try Interner.init(allocator);
     const sym = try interner.get_or_intern(allocator, s);
     for (0..10000) |_| {
         try testing.expectEqual(sym, try interner.get_or_intern(allocator, s));
+        try testing.expectEqualSlices(u8, s, interner.resolve(sym));
     }
 }

@@ -11,6 +11,7 @@ import Control.Monad.Combinators.Expr
 import Cp.Syntax
 import Data.Char qualified as Char
 import Data.Foldable (foldl')
+import Data.Str (Str)
 import Data.Text qualified as T
 import Imports hiding (noneOf)
 import Text.Megaparsec hiding (parse)
@@ -65,14 +66,14 @@ isIdentStart c = Char.isAlpha c || c == '_'
 
 isIdentContinue c = Char.isAlphaNum c || c == '_'
 
-pIdent :: Parser Text
-pIdent = dbg "ident" $ try do
+pIdent :: Parser Str
+pIdent = try do
   _ <- lookAhead $ satisfy $ isIdentStart
   x <- takeWhile1P Nothing isIdentContinue
   guard (not (isKeyword x))
-  x <$ ws
+  x.str <$ ws
 
-dotIdent :: Parser Text
+dotIdent :: Parser Str
 dotIdent = try do
   C.char '.'
   pIdent
@@ -93,9 +94,8 @@ customError :: Text -> Parser a
 customError = customFailure . CustomError
 
 pDecimal :: Parser Integer
-pDecimal = dbg "decimal" do
+pDecimal = do
   n <- signed decimal
-  traceM "after decimal"
   pure n
 
 -- case Scientific.floatingOrInteger n of
@@ -133,7 +133,7 @@ pEnumLiteral = do
   pure $ EnumLiteral tag ()
 
 pType :: Parser Type
-pType = dbg "type" do
+pType = do
   (PrimBool <$ pKeyword "bool")
     <|> (Pointer <$> (char '*' *> pType))
     <|> (Void <$ pKeyword "void")
@@ -141,10 +141,10 @@ pType = dbg "type" do
     <|> (PrimInt <$> pIntType)
     <|> customError "invalid type"
 
-pParam :: Parser (Text, Type)
+pParam :: Parser (Str, Type)
 pParam = ((,) <$> pIdent <*> (char ':' *> pType))
 
-pParamList :: Parser [(Text, Type)]
+pParamList :: Parser [(Str, Type)]
 pParamList = sepEndBy pParam (char ',')
 
 pStruct :: Parser (Decl Parsed)
@@ -155,7 +155,7 @@ pStruct = do
   let info = StructInfo {fields, fieldMap = fields.hm}
   pure $ Struct name info
 
-pEnumTag :: Parser (Text, Maybe NumLiteral)
+pEnumTag :: Parser (Str, Maybe NumLiteral)
 pEnumTag = do
   name <- pIdent
   val <- optional do
@@ -187,7 +187,7 @@ pEnum = do
   let info = EnumInfo {repType, tags}
   pure $ Enum name info
 
-pAt :: Parser Text
+pAt :: Parser Str
 pAt = try do
   C.char '@'
   pIdent
@@ -206,10 +206,10 @@ pBuiltin = do
   pure $ Builtin $ BuiltinParsed ident argList
 
 pBody :: Parser [Stmt Parsed]
-pBody = dbg "body" do
+pBody =
   braces $ many do
     notFollowedBy $ void (char '}') <|> eof
-    dbg "stmt" pStmt
+    pStmt
 
 pIfCont :: Parser (IfCont Parsed)
 pIfCont =
@@ -287,14 +287,12 @@ pEither p p' = (Left <$> p) <|> (Right <$> p')
 
 pCall :: Parser (Expr Parsed)
 pCall = do
-  traceM "in call"
   x <- pIdent
-  traceM "after ident call"
   ( do
       argList <- pArgList
       pure $ Call x argList
     )
-    <|> (pure $ Var x.str)
+    <|> (pure $ Var x)
 
 pEscape :: Parser String
 pEscape = do
@@ -350,7 +348,7 @@ pExpr = pExpr' >>= rest
     pExpr' =
       (NullPtr <$ pKeyword "nullptr")
         <|> (Ref <$> (char '&' *> pExpr))
-        <|> dbg "literal" (Literal <$> pLiteral)
+        <|> (Literal <$> pLiteral)
         <|> pStructLiteral
         <|> pEnumLiteral
         <|> pBuiltin
@@ -375,7 +373,7 @@ pExpr = pExpr' >>= rest
 --         <|> pure p
 
 pFn :: Parser (Decl Parsed)
-pFn = dbg "fn" do
+pFn = do
   pKeyword "fn"
   name <- pIdent
   params <- parens pParamList
@@ -386,7 +384,7 @@ pFn = dbg "fn" do
   pure $ Fn name info
 
 pDecl :: Parser (Decl Parsed)
-pDecl = dbg "decl" do
+pDecl = do
   pFn
     <|> pEnum
     <|> pStruct
@@ -401,7 +399,7 @@ showError :: (ParseErrorBundle Text CustomError) -> String
 showError e = errorBundlePretty e
 
 pProgram :: Parser (ProgramParsed)
-pProgram = dbg "program" do
+pProgram = do
   ProgramParsed <$> many pDecl
 
 parse :: Text -> Either (ParseErrorBundle Text CustomError) (ProgramParsed)

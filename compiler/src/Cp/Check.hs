@@ -11,12 +11,12 @@ where
 import Cp.Syntax
 import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
+import Data.Str (Str)
 import Data.These qualified as These
 import Imports
-import Data.Str (Str)
 
 data Scope = Scope
-  { mapping :: HashMap Text (Type, LocalName)
+  { mapping :: HashMap Str (Type, LocalName)
   }
 
 data CheckState = CheckState
@@ -28,7 +28,7 @@ data CheckState = CheckState
     errors :: [CheckError],
     scopes :: [Scope],
     unique :: Int,
-    labels :: HashSet Text
+    labels :: HashSet Str
   }
 
 data CheckError = CheckError
@@ -70,6 +70,12 @@ mkCheckEnv =
 
 type M = ReaderT CheckEnv (State CheckState)
 
+checkLog :: String -> M ()
+-- checkLog t = do
+--   pos <- use #pos
+--   traceM $ show pos ++ ": " ++ t
+checkLog = const $ pure ()
+
 newScope :: M a -> M a
 newScope m = do
   #scopes %= (Scope {mapping = mempty} :)
@@ -80,10 +86,10 @@ newScope m = do
       pure x
     [] -> error "should not have empty scope"
 
-addScope :: Text -> (Type, LocalName) -> M ()
+addScope :: Str -> (Type, LocalName) -> M ()
 addScope name localName = #scopes % _head % #mapping % at name .= Just localName
 
-lookupScope :: Text -> M (Maybe (Type, LocalName))
+lookupScope :: Str -> M (Maybe (Type, LocalName))
 lookupScope name = do
   go <$> use #scopes
   where
@@ -98,7 +104,7 @@ freshNameFrom name = do
   #unique %= (+ 1)
   pure $ LocalName name u
 
-lookupType :: CheckState -> Text -> Bool
+lookupType :: CheckState -> Str -> Bool
 lookupType st n = (has (ix n) st.structs) || (has (ix n) st.enums) || (has (ix n) st.unions)
 
 checkType :: Type -> M ()
@@ -107,7 +113,7 @@ checkType ty = do
   case ty of
     NamedType name -> case lookupType st name of
       True -> pure ()
-      False -> checkError $ "could not find type: ".t <> name
+      False -> checkError $ "could not find type: ".t <> name.t
     Pointer ty -> checkType ty
     _ -> pure ()
 
@@ -116,8 +122,8 @@ checkError error = do
   pos <- use #pos
   #errors %= (CheckError {error, pos} :)
 
-findDuplicate :: forall a. [(Text, a)] -> Either Text (HashMap Text a)
-findDuplicate = go (Empty :: HashMap Text a)
+findDuplicate :: forall a. [(Str, a)] -> Either Str (HashMap Str a)
+findDuplicate = go (Empty :: HashMap Str a)
   where
     go m ((t, x) : ts) =
       if has (ix t) m
@@ -125,10 +131,10 @@ findDuplicate = go (Empty :: HashMap Text a)
         else go (m & at t .~ Just x) ts
     go m [] = Right m
 
-checkDuplicate :: [(Text, a)] -> (Text -> Text) -> M ()
+checkDuplicate :: [(Str, a)] -> (Text -> Text) -> M ()
 checkDuplicate ts msg = case findDuplicate ts of
   Right _ -> pure ()
-  Left t -> checkError (msg t)
+  Left t -> checkError (msg t.t)
 
 eitherToM :: Either Text a -> M (Maybe a)
 eitherToM = \case
@@ -164,7 +170,7 @@ maybeApply x (Just f) = f x
 
 checkLiteral :: Literal Parsed -> Type -> M (Expr Typed)
 checkLiteral lit ty = do
-  traceM "checking literal"
+  checkLog "checking literal"
   case lit of
     Num lit () -> do
       case ty of
@@ -210,14 +216,14 @@ checkLiteral lit ty = do
 
 builtinSpec :: BuiltinTag -> BuiltinSpec
 builtinSpec tag = case tag of
-  Add -> binNum "add".t
-  Sub -> binNum "sub".t
-  Mul -> binNum "mul".t
-  Eq -> binNumBool "eq".t
-  Lt -> binNumBool "lt".t
-  Le -> binNumBool "le".t
-  Ge -> binNumBool "ge".t
-  Gt -> binNumBool "gt".t
+  Add -> binNum "add".str
+  Sub -> binNum "sub".str
+  Mul -> binNum "mul".str
+  Eq -> binNumBool "eq".str
+  Lt -> binNumBool "lt".str
+  Le -> binNumBool "le".str
+  Ge -> binNumBool "ge".str
+  Gt -> binNumBool "gt".str
   _ -> todo
   where
     binNum = bin checkIntType id 2
@@ -229,14 +235,14 @@ builtinSpec tag = case tag of
           args' <- traverseOf (each % #_ExprArg) (`checkExpr` ty) args
           pure $ Just (returnTy ty, args')
         _ -> do
-          checkError $ "invalid arguments for ".t <> name
+          checkError $ "invalid arguments for ".t <> name.t
           pure Nothing
     checkIntType ty = case ty of
       PrimInt _ -> pure ()
       _ -> checkError $ "expected int type".t
 
 data BuiltinSpec = BuiltinSpec
-  { name :: Text,
+  { name :: Str,
     parseArgs :: [BuiltinArg Parsed] -> M (Maybe (Type, [BuiltinArg Typed]))
   }
 
@@ -248,7 +254,7 @@ inferWrong = (Unknown, Error)
 
 parseBuiltin :: BuiltinParsed -> M (Type, Expr Typed)
 parseBuiltin builtin
-  | builtin.name == "cast".t,
+  | builtin.name == "cast".str,
     [TypeArg ty, ExprArg expr] <- builtin.args = do
       (ty', expr) <- inferExpr expr
       unless (isValidCastTy ty ty') do
@@ -257,12 +263,12 @@ parseBuiltin builtin
   | otherwise = do
       case findRes of
         Nothing -> do
-          checkError $ "could not find builtin ".t <> builtin.name
+          checkError $ "could not find builtin ".t <> builtin.name.t
           pure inferWrong
         Just (tag, spec) -> do
           spec.parseArgs builtin.args >>= \case
             Nothing -> do
-              checkError $ "invalid arguments for ".t <> builtin.name
+              checkError $ "invalid arguments for ".t <> builtin.name.t
               pure inferWrong
             Just (ty, args) -> pure (ty, Builtin $ SomeBuiltin tag args)
   where
@@ -281,7 +287,7 @@ inferExpr expr = case expr of
     fn <- use (#fns % at call)
     case fn of
       Nothing -> do
-        checkError $ "could not find function ".t <> call
+        checkError $ "could not find function ".t <> call.t
         pure (Unknown, Error)
       Just FnType {params, returnType} -> do
         let argLen = length @[] args
@@ -302,7 +308,7 @@ inferExpr expr = case expr of
   Var var ->
     lookupScope var >>= \case
       Nothing -> do
-        checkError $ "var ".t <> var <> " not found".t
+        checkError $ "var ".t <> var.t <> " not found".t
         pure (Unknown, Error)
       Just res -> pure $ Var <$> res
   Ref expr -> do
@@ -326,11 +332,11 @@ inferExpr expr = case expr of
       NamedType name | Just struct <- st.structs ^? ix name -> do
         case struct.fieldMap ^. at fieldName of
           Nothing -> do
-            checkError $ "could not find field ".t <> (show fieldName).t <> " in struct ".t <> name
+            checkError $ "could not find field ".t <> (show fieldName).t <> " in struct ".t <> name.t
             pure inferWrong
           Just ty -> pure (ty, GetField expr name)
       NamedType name -> do
-        checkError $ "could not find struct ".t <> name
+        checkError $ "could not find struct ".t <> name.t
         pure inferWrong
       _ -> do
         checkError $ "expected named type".t
@@ -340,7 +346,7 @@ inferExpr expr = case expr of
 
 checkExpr :: Expr Parsed -> Type -> M (Expr Typed)
 checkExpr expr ty = do
-  traceM $ "checking expr: " ++ show expr ++ " ty: " ++ show ty
+  checkLog $ "checking expr: " ++ show expr ++ " ty: " ++ show ty
   case expr of
     Literal lit -> checkLiteral lit ty
     -- PlaceExpr (Place expr place) -> do
@@ -360,7 +366,7 @@ getStructPartial ty = do
   let !struct = st.structs ^?! ix (ty ^?! #_NamedType)
   pure struct
 
-checkFieldsOkay :: [(Text, Expr Parsed)] -> HashMap Text Type -> Either Text [(Text, Expr Parsed, Type)]
+checkFieldsOkay :: [(Str, Expr Parsed)] -> HashMap Str Type -> Either Text [(Str, Expr Parsed, Type)]
 checkFieldsOkay fields fieldTypes =
   case findDuplicate fields of
     Right fieldExprs -> do
@@ -392,7 +398,7 @@ inferBraceLiteral maybeTy fields = do
                 pure (name, expr)
               pure (ty, BraceLiteral $ StructLiteral fields (HM.fromList fields) struct name)
         NamedType name | otherwise -> do
-          checkError $ "could not find struct ".t <> name
+          checkError $ "could not find struct ".t <> name.t
           pure inferWrong
         _ -> do
           checkError "expected named type".t
@@ -468,12 +474,12 @@ inferLiteral lit =
               pure (PrimInt ty, Literal $ Num num ty)
     Bool b -> pure (PrimBool, Literal $ Bool b)
 
-checkTypeNotDuplicate :: Text -> M ()
+checkTypeNotDuplicate :: Str -> M ()
 checkTypeNotDuplicate name = do
   st <- get
-  traceM $ "st: " ++ pShowC st.structs
+  checkLog $ "st: " ++ pShowC st.structs
   case lookupType st name of
-    True -> checkError $ ("duplicate type: ".t <> name)
+    True -> checkError $ ("duplicate type: ".t <> name.t)
     False -> pure ()
 
 checkCont :: IfCont Parsed -> Type -> M (IfCont Typed)
@@ -512,7 +518,7 @@ checkStmt stmt returnTy = case stmt of
     addScope name (ty, name')
     pure $ Let name' (Just ty) expr ty
   Return expr -> do
-    traceM "checking return"
+    checkLog "checking return"
     case expr of
       Nothing -> do
         void $ unifyType returnTy Void
@@ -523,12 +529,12 @@ checkStmt stmt returnTy = case stmt of
   Goto label -> do
     labels <- use #labels
     unless (labels ^. contains label) do
-      checkError $ "could not find label ".t <> label
+      checkError $ "could not find label ".t <> label.t
     pure $ Goto label
   Label label -> do
     labels <- use #labels
     when (labels ^. contains label) do
-      checkError $ "duplicate label ".t <> label
+      checkError $ "duplicate label ".t <> label.t
     #labels %= (label `HS.insert`)
     pure $ Label label
 
@@ -557,7 +563,7 @@ checkDecl d = do
       #enums % at name .= Just info
       pure $ Enum name info
     Fn name FnInfo {fnType = fnType@FnType {params = paramTypes, returnType}, params, body} -> do
-      traceM "checking fn"
+      checkLog "checking fn"
       mapM_ checkType (fmap snd paramTypes)
       checkType returnType
       freshParams <- for params \param -> do
@@ -605,7 +611,7 @@ revertDecl decl = case decl of
   SpannedDecl decl pos -> SpannedDecl (revertDecl decl) pos
 
 revertVar :: Var Typed -> Var Parsed
-revertVar = localNameToText
+revertVar v = (localNameToText v).str
 
 revertBody :: [Stmt Typed] -> [Stmt Parsed]
 revertBody stmt = revertStmt <$> stmt
@@ -649,13 +655,12 @@ revertExpr expr = case expr of
       SomeBuiltin tag args -> do
         let args' = args & each % #_ExprArg %~ revertExpr
         case findOf each ((== tag) . fst) builtinSpecs of
-          Nothing -> Builtin $ BuiltinParsed "__could_not_find_tag_name".t args'
+          Nothing -> Builtin $ BuiltinParsed "__could_not_find_tag_name".str args'
           Just (_tag, spec) -> Builtin $ BuiltinParsed spec.name args'
-      BuiltinCast ty ty' expr -> Builtin $ BuiltinParsed "cast".t [TypeArg ty, ExprArg (As ty' $ revertExpr expr)]
+      BuiltinCast ty ty' expr -> Builtin $ BuiltinParsed "cast".str [TypeArg ty, ExprArg (As ty' $ revertExpr expr)]
       BuiltinIntCast ty _ty' expr -> As (PrimInt ty) (revertExpr expr)
   SpannedExpr expr p -> SpannedExpr (revertExpr expr) p
   NullPtr -> NullPtr
-  -- PlaceExpr place -> PlaceExpr $ revertPlace place
   Ref expr -> Ref $ revertExpr expr
   Literal lit -> case lit of
     String s -> Literal $ String s

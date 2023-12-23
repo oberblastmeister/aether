@@ -17,19 +17,23 @@ fn init() intern.Interner {
 
 var interner: Lazy(intern.Interner, init) = .{};
 
+export fn zig_intern_resolve(symbol: u64) [*]const u8 {
+    return interner.get().resolve(@bitCast(symbol)).ptr;
+}
+
 export fn zig_intern_bytestring(str: [*]u8, offset: usize, len: usize) u64 {
     if (interner.get().get_or_intern(
         std.heap.c_allocator,
-        str[offset..len],
+        str[offset .. offset + len],
     )) |symbol| {
-        return symbol.to_u64();
+        return @bitCast(symbol);
     } else |err| {
         debug.panic("failed to intern bytestring: {}", .{err});
     }
 }
 
 export fn zig_hash_bytestring_wyhash(str: [*]u8, offset: usize, len: usize) u64 {
-    const slice: []u8 = str[offset..len];
+    const slice: []u8 = str[offset .. offset + len];
     var hasher = hash.Wyhash.init(0);
     hash.autoHashStrat(&hasher, slice, .Deep);
     return hasher.final();

@@ -67,7 +67,7 @@ toCType = TB.runBuilder . go
   where
     go ty =
       case ty of
-        NamedType name -> "struct " <> name.tb
+        NamedType name -> "struct " <> name.t.tb
         PrimInt (IntType size signed) -> do
           let prefix = case signed of
                 Unsigned -> "u"
@@ -165,12 +165,12 @@ genExpr expr = case expr of
     parens do
       genExpr expr
       emit "."
-      emit name
+      emit name.t
   Call name args -> do
     case name of
       CallLocal local -> todo
       CallTop name -> do
-        emit name
+        emit name.t
     parens do
       commaList args \arg -> do
         genExpr arg
@@ -239,7 +239,7 @@ genDecl decl = case decl of
     -- emit "static inline "
     emitType returnType
     emit " "
-    emit name
+    emit name.t
     parens do
       commaList (zip params (fmap snd paramTypes)) \(name, ty) -> do
         emitType ty
@@ -251,12 +251,12 @@ genDecl decl = case decl of
           for_ body \stmt -> genStmt stmt
       Nothing -> emit ";"
   Struct name info -> do
-    emit $ "struct " <> name
+    emit $ "struct " <> name.t
     braces do
       for_ info.fields \(name, ty) -> do
         emitType ty
         emit " "
-        emit name
+        emit name.t
         emit ";"
     emit ";"
   _ -> todo

@@ -27,15 +27,15 @@ run dir path link = do
   case syntax of
     Left e -> putStrLn $ Parser.showError e
     Right syntax -> do
-      putStrLn $ "syntax: " ++ pShowC syntax
-      putStrLn "checking"
+      -- putStrLn $ "syntax: " ++ pShowC syntax
+      -- putStrLn "checking"
       case Check.checkProgram syntax of
         Left e -> putStrLn $ show e
         Right program -> do
           let buildDir = dir </> "_build"
           Directory.createDirectoryIfMissing False buildDir
           let cOutput = Backend.C.genProgram False program
-          T.putStrLn $ "output:\n".t <> cOutput
+          -- T.putStrLn $ "output:\n".t <> cOutput
           let name = takeFileName path
           let cFile = buildDir </> name -<.> ".c"
           T.writeFile cFile cOutput

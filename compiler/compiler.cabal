@@ -60,6 +60,9 @@ common common-flags
     -Werror=incomplete-uni-patterns
     -Werror=missing-methods
     -Wno-missing-signatures
+    +RTS
+    -A128M
+    -RTS
   build-depends: 
     base >= 4.17,
     ffi,
@@ -84,6 +87,7 @@ common common-flags
     text-builder-linear,
     these,
     bitvec,
+    effectful,
 
 library
   import: common-flags
@@ -108,23 +112,31 @@ library
     Data.ToInt
     Data.BitSet
     Data.Intern
+    Data.TextUtils
+    Data.Str
   hs-source-dirs:   src
 
+common rtsopts
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
 executable genapply
-  import: common-flags
+  import: common-flags, rtsopts
   main-is: Main.hs
   build-depends: compiler
   hs-source-dirs: genapply
 
 executable compiler
-    import:           common-flags
+    import: common-flags, rtsopts
     main-is:          Main.hs
     build-depends:
         compiler
     hs-source-dirs:   app
 
 test-suite compiler-test
-    import:           common-flags
+    import: common-flags, rtsopts
     type:             exitcode-stdio-1.0
     hs-source-dirs:   test
     main-is:          Main.hs
