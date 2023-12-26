@@ -98,10 +98,6 @@ pDecimal = do
   n <- signed decimal
   pure n
 
--- case Scientific.floatingOrInteger n of
---   Left (_d :: Double) -> customError "got float instead of integer"
---   Right x -> pure x
-
 pKeyword :: Text -> Parser ()
 pKeyword kw = do
   _ <- C.string kw
@@ -361,16 +357,6 @@ pExpr = pExpr' >>= rest
           rest (f e)
       )
         <|> pure e
-
--- pPlaces :: Parser PlaceContext
--- pPlaces = go CxHole
---   where
---     go p =
---       ( do
---           f <- pPlace
---           go (f p)
---       )
---         <|> pure p
 
 pFn :: Parser (Decl Parsed)
 pFn = do

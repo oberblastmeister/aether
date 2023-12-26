@@ -36,6 +36,10 @@ instance HasField "s" Str String where
 
 newtype Str = Str Word64
 
+instance Ord Str where
+  compare (Str w) (Str w') = compare w w'
+  {-# INLINE compare #-}
+
 instance Show Str where
   show = show . getText
   {-# INLINE show #-}

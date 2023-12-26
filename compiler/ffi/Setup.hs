@@ -18,7 +18,7 @@ updateExtraLibDirs localBuildInfo = do
       lib = fromJust $ library packageDescription
       libBuild = libBuildInfo lib
   dir <- getCurrentDirectory
-  putStrLn $ "dir: " ++ dir
+  -- putStrLn $ "dir: " ++ dir
   return
     localBuildInfo
       { localPkgDescr =

@@ -10,6 +10,8 @@ import Data.HashMap.Strict qualified as HM
 import Data.Hashable (Hashable)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as M
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Builder.Linear qualified as TB
@@ -115,4 +117,8 @@ instance (Ord k) => HasField "map" [(k, v)] (Map k v) where
 
 instance (Hashable k) => HasField "hm" [(k, v)] (HashMap k v) where
   getField = HM.fromList
+  {-# INLINE getField #-}
+
+instance (Ord a) => HasField "set" [a] (Set a) where
+  getField = Set.fromList
   {-# INLINE getField #-}

@@ -19,7 +19,7 @@ import Data.These qualified as These
 import Effectful
 import Effectful.Reader.Static
 import Effectful.State.Static.Local
-import Imports hiding (Reader, State, ask, get, modify, put, runReader, runState)
+import Imports
 
 data Scope = Scope
   { mapping :: HashMap Str (Type, LocalName)
@@ -194,33 +194,6 @@ checkLiteral lit ty = do
       (ty', expr) <- inferLiteral lit
       unifyType ty' ty <&> maybeApply expr
 
--- inferPlace :: Place Parsed -> M (Type, Place Typed)
--- inferPlace (Place expr place) = do
---   (ty, expr) <- inferExpr expr
---   ty <- go ty place
---   pure $ (ty, Place expr place)
---   where
---     go ty place = case place of
---       CxDeref place -> case ty of
---         Pointer ty -> go ty place
---         _ -> do
---           expectError "pointer".t (show ty).t
---           pure Unknown
---       CxHole -> pure ty
---       CxGetField place field ->
---         case ty of
---           NamedType name -> do
---             st <- get
---             let struct = st ^?! #structs % ix name
---             case struct.fieldMap ^. at name of
---               Nothing -> do
---                 checkError $ "could not field field ".t <> (show field).t <> " in struct ".t <> name
---                 pure Unknown
---               Just ty -> go ty place
---           _ -> do
---             expectError "named".t (show ty).t
---             pure Unknown
-
 builtinSpec :: BuiltinTag -> BuiltinSpec
 builtinSpec tag = case tag of
   Add -> binNum "add".str
@@ -358,10 +331,6 @@ checkExpr expr ty = do
   checkLog $ "checking expr: " ++ show expr ++ " ty: " ++ show ty
   case expr of
     Literal lit -> checkLiteral lit ty
-    -- PlaceExpr (Place expr place) -> do
-    --   case place of
-    --     CxHole -> checkExpr expr ty
-    --     _ -> todo
     BraceLiteral fields -> do
       (_, res) <- (inferBraceLiteral (Just ty) fields)
       pure res

@@ -38,6 +38,10 @@ instance (ToInt k) => Ixed (IdMap k v) where
 instance (ToInt k) => At (IdMap k v) where
   at i = mapIso % at (toInt i)
   {-# INLINE at #-}
+  
+-- instance FoldableWithIndex k (IdMap k) where
+--   ifoldMap f = ifoldMap f . unEnumMap
+--   {-# INLINE ifoldMap #-}
 
 fromList :: forall k v. (ToInt k) => [(k, v)] -> IdMap k v
 fromList = coerce (IntMap.fromList :: [(Int, v)] -> IntMap v) . map (first toInt)

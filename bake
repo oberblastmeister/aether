@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-dir="$(dirname "$0")"
-cd "$(dirname "$dir")/bakery"
-cabal run bake -- --directory "$dir" "$@"

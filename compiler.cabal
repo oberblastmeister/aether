@@ -6,9 +6,9 @@ license-file:       LICENSE
 author:             brian
 maintainer:         littlebubu.shu@gmail.com
 build-type:         Simple
-extra-doc-files:    CHANGELOG.md
 
 common common-flags
+  -- dependent haskell!
   default-extensions:
     FlexibleInstances,
     FlexibleContexts,
@@ -38,6 +38,7 @@ common common-flags
     DeriveTraversable ,
     BlockArguments,
     GADTs,
+    QuantifiedConstraints,
     PolyKinds,
     ViewPatterns,
     PatternSynonyms,
@@ -52,6 +53,7 @@ common common-flags
     TypeData,
   default-language: GHC2021
   ghc-options:
+    -fdiagnostics-color=always
     -Wall
     -Wincomplete-record-updates
     -Wredundant-constraints
@@ -60,9 +62,6 @@ common common-flags
     -Werror=incomplete-uni-patterns
     -Werror=missing-methods
     -Wno-missing-signatures
-    +RTS
-    -A128M
-    -RTS
   build-depends: 
     base >= 4.17,
     ffi,
@@ -89,36 +88,49 @@ common common-flags
     bitvec,
     effectful,
     effectful-core,
-  include-dirs:
-    src/include
+    heaps,
+    some,
 
 library
   import: common-flags
   exposed-modules:
+    Effects.Fresh
     Imports
-    Imports.Dot
-    Imports.Debug
-    Imports.Panic
-    Imports.Data
-    Imports.Monad
-    Imports.Functor
-    Imports.Function
-    Imports.Traversable
-    Imports.Kind
+      Imports.Dot
+      Imports.Debug
+      Imports.Panic
+      Imports.Data
+      Imports.Monad
+      Imports.Functor
+      Imports.Function
+      Imports.Traversable
+      Imports.Kind
+    Cfg
+      Cfg.Graph
+      Cfg.Types
+      Cfg.Dataflow
     Lir
+      Lir.Ssa
+      Lir.Instr
+      Lir.ToTree
     Cp
-    Cp.Check
-    Cp.Parser
-    Cp.Syntax
-    Cp.Driver
-    Cp.Backend.C
+      Cp.Check
+      Cp.Parser
+      Cp.Syntax
+      Cp.Driver
+      Cp.Backend.C
+    Data.BigGraph
     Data.IdMap
     Data.ToInt
     Data.BitSet
     Data.Intern
     Data.TextUtils
     Data.Str
-  hs-source-dirs:   src
+    Data.Deque
+    Data.HashSetDeque
+  hs-source-dirs:   compiler/src
+  include-dirs:
+    compiler/include
 
 common rtsopts
   ghc-options:
@@ -130,21 +142,21 @@ executable genapply
   import: common-flags, rtsopts
   main-is: Main.hs
   build-depends: compiler
-  hs-source-dirs: genapply
+  hs-source-dirs: compiler/genapply
 
 executable compiler
-    import: common-flags, rtsopts
-    main-is:          Main.hs
-    build-depends:
-        compiler
-    hs-source-dirs:   app
+  import: common-flags, rtsopts
+  main-is:          Main.hs
+  build-depends:
+    compiler
+  hs-source-dirs:   compiler/app
 
 test-suite compiler-test
-    import: common-flags, rtsopts
-    type:             exitcode-stdio-1.0
-    hs-source-dirs:   test
-    main-is:          Main.hs
-    build-depends:
-      compiler,
-      tasty,
-      tasty-hunit,
+  import: common-flags, rtsopts
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   compiler/test
+  main-is:          Main.hs
+  build-depends:
+    compiler,
+    tasty,
+    tasty-hunit,

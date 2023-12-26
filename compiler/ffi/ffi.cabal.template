@@ -19,5 +19,3 @@ library
   extra-libraries:
     zigbits
     
-  extra-lib-dirs: /home/brian/projects/my/aether/compiler/ffi/zigbits/zig-out/lib
--- Do not edit! This file was generated!

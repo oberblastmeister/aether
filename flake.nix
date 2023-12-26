@@ -24,6 +24,7 @@
           buildInputs = with pkgs; [
             zigpkgs.master
             haskell.compiler.ghc96
+            haskell.compiler.ghc98
             haskell.packages.ghc96.haskell-language-server
           ];
         };

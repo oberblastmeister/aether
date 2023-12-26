@@ -51,11 +51,11 @@ pBuild :: Parser Command
 pBuild = pure Build
 
 pTest :: Parser Command
-pTest = pure Test
+pTest = Test <$> many (strArgument (metavar "TEST_ARG"))
 
 data Command
   = Build
-  | Test
+  | Test [String]
   | Run
   | Debug
   | Clean

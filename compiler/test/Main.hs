@@ -10,7 +10,7 @@ import Test.Tasty.HUnit
 main :: IO ()
 main = defaultMain tests
 
-runtimePath = "test_data/test_runtime/zig-out/lib/libtest_runtime.a"
+runtimePath = "compiler/test_data/test_runtime/zig-out/lib/libtest_runtime.a"
 
 compileRuntime :: IO ()
 compileRuntime = do
@@ -22,7 +22,7 @@ compileRuntime = do
     compile = do 
       Process.runProcess_
         ( Process.proc "zig" ["build"]
-            & Process.setWorkingDir "test_data/test_runtime"
+            & Process.setWorkingDir "compiler/test_data/test_runtime"
         )
 
 tests :: TestTree
@@ -36,4 +36,4 @@ tests =
 
 runFile path = do
   compileRuntime
-  Cp.run "test_data" ("test_data" </> path) [runtimePath]
+  Cp.run "compiler/test_data" ("compiler/test_data" </> path) [runtimePath]

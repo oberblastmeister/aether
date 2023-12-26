@@ -11,3 +11,4 @@ import Imports.Panic as X
 import Imports.Traversable as X
 import Optics as X
 import Optics.Operators.Unsafe as X
+import Data.Maybe as X (fromMaybe)
