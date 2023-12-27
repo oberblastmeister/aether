@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Backend.X86.Reg where
+module Backend.X86.Register where
 
 import Imports
 

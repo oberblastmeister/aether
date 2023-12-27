@@ -96,6 +96,7 @@ library
   exposed-modules:
     Effects.Fresh
     Imports
+      Imports.Optics
       Imports.Dot
       Imports.Debug
       Imports.Panic
@@ -119,6 +120,7 @@ library
       Cp.Syntax
       Cp.Driver
       Cp.Backend.C
+      Cp.Backend.Lir
     Data.BigGraph
     Data.IdMap
     Data.ToInt

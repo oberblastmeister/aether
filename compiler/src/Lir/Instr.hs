@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Lir.Instr
@@ -15,6 +16,7 @@ module Lir.Instr
     blockCalls,
     defsTraversal,
     usesTraversal,
+    _BlockArgs,
   )
 where
 
@@ -42,7 +44,7 @@ data InstrControl op
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
 data BlockCall op = BlockCall
-  { label :: Cfg.Name,
+  { label :: Cfg.Label,
     args :: [op]
   }
   deriving (Show, Eq, Functor, Foldable, Traversable)
@@ -65,6 +67,13 @@ pattern (:=) :: Cfg.Name -> (OpInstr op) -> Instr op O
 pattern name := instr = Assign name instr
 
 {-# COMPLETE (:=) #-}
+
+makePrismLabels ''Operand
+makeFieldLabelsNoPrefix ''BlockCall
+
+_BlockArgs :: Traversal' (Instr op E) [Cfg.Name]
+_BlockArgs = traversalVL $ \f -> \case
+  BlockArgs names -> BlockArgs <$> f names
 
 blockCalls :: Traversal' (Instr op C) (BlockCall op)
 blockCalls = traversalVL $ \f (Control instr) ->

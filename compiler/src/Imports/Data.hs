@@ -2,7 +2,6 @@ module Imports.Data
   ( module X,
     LText,
     LByteString,
-    unwrapOr,
   )
 where
 
@@ -16,7 +15,7 @@ import Data.Int as X (Int16, Int32, Int64, Int8)
 import Data.IntMap.Strict as X (IntMap)
 import Data.IntSet as X (IntSet)
 import Data.Map.Strict as X (Map)
-import Data.Maybe (fromMaybe)
+import Data.Maybe as X (fromMaybe) 
 import Data.Set as X (Set)
 import Data.Text as X (Text)
 import Data.Text.Lazy qualified as TL
@@ -25,15 +24,7 @@ import Data.Vector.Mutable as X (MVector)
 import Data.Void as X (Void, absurd, vacuous)
 import Data.Word as X (Word16, Word32, Word64, Word8)
 import GHC.Generics as X (Generic)
-import Optics hiding (pattern (:>), pattern (:<))
 
 type LText = TL.Text
 
 type LByteString = LB.ByteString
-
-unwrapOr :: a -> Lens (Maybe a) (Maybe b) a b
-unwrapOr def =
-  lens
-    (fromMaybe def)
-    (\_ x -> Just x)
-{-# INLINE unwrapOr #-}

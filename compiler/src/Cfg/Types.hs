@@ -5,19 +5,32 @@ module Cfg.Types
     HasJumps (..),
     HasUses (..),
     HasDefs (..),
+    Label (..),
     nameStr,
+    compareName,
   )
 where
 
-import Data.Str (Str)
+import Data.Str (NonDetStr (..), Str)
 import Imports
 
 data Name
-  = StrName Str
-  | GenName Str Int
+  = StrName NonDetStr
+  | GenName NonDetStr Int
   deriving (Show, Eq, Ord, Generic)
 
-nameStr :: Name -> Str
+compareName :: Name -> Name -> Ordering
+compareName = compare `on` by
+  where
+    by (StrName str) = Left str.getStr
+    by (GenName str i) = Right (str.getStr, i)
+
+-- compare (StrName str) (StrName str') = compare str str'
+-- compare (GenName _ i) (GenName _ i') = compare i i'
+-- compare (StrName _) (GenName _ _) = LT
+-- compare (GenName _ _) (StrName _) = GT
+
+nameStr :: Name -> NonDetStr
 nameStr (StrName str) = str
 nameStr (GenName str _) = str
 
@@ -29,5 +42,8 @@ class HasDefs a n | a -> n where
 class HasUses a n | a -> n where
   uses :: a -> [n]
 
+newtype Label = Label {name :: Name}
+  deriving (Show, Eq, Hashable)
+
 class HasJumps a where
-  jumps :: a -> [Name]
+  jumps :: a -> [Label]

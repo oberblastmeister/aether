@@ -92,13 +92,7 @@ runTransfer transfer graph = go initialFacts initialQueue
     initialQueue = HashSetDeque.fromList case transfer.direction of
       Forward -> [graph.start]
       Backward -> [graph.end]
-    transpose =
-      HM.fromListWith
-        (++)
-        [ (to, [from])
-          | (from, block) <- itoListOf each graph.blocks,
-            to <- jumps block.exit
-        ]
+    transpose = graphPrecessors graph
     go :: LabelMap d -> HashSetDeque Label -> LabelMap d
     go !factBase !queue = case HashSetDeque.uncons queue of
       Just (l, queue) -> case maybeNewFacts of

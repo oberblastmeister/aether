@@ -2,21 +2,27 @@
 
 module Data.Str
   ( Str,
+    NonDetStr (..),
     getText,
   )
 where
 
-import Data.ByteString (ByteString)
 import Data.ByteString.Short qualified as BS
-import Data.Hashable (Hashable (..))
 import Data.Intern
 import Data.String (IsString (..))
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.TextUtils qualified as TextUtils
 import Data.ToInt (ToInt (..))
 import Data.Word
 import GHC.Records (HasField (..))
+import Imports
+
+newtype NonDetStr = NonDetStr {getStr :: Str}
+  deriving (Show, Eq, Hashable)
+
+instance Ord NonDetStr where
+  compare (NonDetStr (Str w)) (NonDetStr (Str w')) = compare w w'
+  {-# INLINE compare #-}
 
 instance HasField "str" Text Str where
   getField = fromString . T.unpack
@@ -37,7 +43,7 @@ instance HasField "s" Str String where
 newtype Str = Str Word64
 
 instance Ord Str where
-  compare (Str w) (Str w') = compare w w'
+  compare = compare `on` getText
   {-# INLINE compare #-}
 
 instance Show Str where
