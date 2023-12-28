@@ -2,8 +2,14 @@ Right
   [ Function
     { name = "my_function"
     , params =
-      [ "first"
-      , "second"
+      [ StrName
+        ( NonDetStr
+          { getStr = "first" }
+        )
+      , StrName
+        ( NonDetStr
+          { getStr = "second" }
+        )
       ]
     , graph = Graph
       { start = Label
@@ -46,6 +52,38 @@ Right
                   )
                 )
               ]
+            , exit = Control
+              ( Jump
+                ( BlockCall
+                  { label = Label
+                    { name = StrName
+                      ( NonDetStr
+                        { getStr = "first" }
+                      )
+                    }
+                  , args =
+                    [ Var
+                      ( StrName
+                        ( NonDetStr
+                          { getStr = "y" }
+                        )
+                      )
+                    ]
+                  }
+                )
+              )
+            }
+          )
+        ,
+          ( Label
+            { name = StrName
+              ( NonDetStr
+                { getStr = "third" }
+              )
+            }
+          , Block
+            { entry = BlockArgs []
+            , body = []
             , exit = Control Ret
             }
           )
@@ -82,14 +120,50 @@ Right
                   )
                 )
               ]
-            , exit = Control Ret
+            , exit = Control
+              ( CondJump
+                ( Var
+                  ( StrName
+                    ( NonDetStr
+                      { getStr = "y" }
+                    )
+                  )
+                )
+                ( BlockCall
+                  { label = Label
+                    { name = StrName
+                      ( NonDetStr
+                        { getStr = "first" }
+                      )
+                    }
+                  , args =
+                    [ Var
+                      ( StrName
+                        ( NonDetStr
+                          { getStr = "y" }
+                        )
+                      )
+                    ]
+                  }
+                )
+                ( BlockCall
+                  { label = Label
+                    { name = StrName
+                      ( NonDetStr
+                        { getStr = "third" }
+                      )
+                    }
+                  , args = []
+                  }
+                )
+              )
             }
           )
         ]
       , end = Label
         { name = StrName
           ( NonDetStr
-            { getStr = "second" }
+            { getStr = "third" }
           )
         }
       }

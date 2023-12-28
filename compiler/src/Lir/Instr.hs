@@ -32,7 +32,7 @@ import Imports
 
 data Function = Function
   { name :: Str,
-    params :: [Str],
+    params :: [Cfg.Name],
     graph :: Graph
   }
   deriving (Show, Eq)

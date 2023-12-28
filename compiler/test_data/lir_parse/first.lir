@@ -1,8 +1,12 @@
 (define (my_function (first u64) (second u64)) u64
-  (label first
+  (label (first)
     (let (y u64) (add u64 x y))
-    (ret))
-  (label second
-    (let (y u64) (add u64 x y))
-    (ret))
+    (cond_jump y (first y) (third))
   )
+  (label (second)
+    (let (y u64) (add u64 x y))
+    (jump (first y))
+  )
+  (label (third)
+    (ret))
+)

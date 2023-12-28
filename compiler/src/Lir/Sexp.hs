@@ -13,11 +13,19 @@ import Sexp.Parser qualified as SP
 pType :: SP.SParser ()
 pType = SP.lit "u64"
 
-pTyped :: SP.SParser Text
+pTyped :: SP.SParser Cfg.Name
 pTyped = SP.list do
-  name <- SP.item SP.ident
+  name <- SP.item pVar
   SP.item pType
   pure name
+
+pVar :: SP.SParser Cfg.Name
+pVar sexp = do
+  name <- SP.ident sexp
+  pure (Cfg.nameFromText name)
+
+pLabel :: SP.SParser Cfg.Label
+pLabel sexp = Cfg.Label <$> pVar sexp
 
 pOperand :: SP.SParser Lir.Operand
 pOperand sexp = do
@@ -35,6 +43,12 @@ pOpInstr = SP.list do
       pure $ Lir.Add op1 op2
     _ -> throwError (T.pack "invalid instruction")
 
+pBlockCall :: SP.SParser (Lir.BlockCall Lir.Operand)
+pBlockCall = SP.list do
+  label <- SP.item pLabel
+  args <- SP.listRest pOperand
+  pure $ Lir.BlockCall label args
+
 pInstr :: SP.SParser (Lir.SomeInstr Lir.Operand)
 pInstr = SP.list do
   instrName <- SP.item SP.ident
@@ -42,15 +56,29 @@ pInstr = SP.list do
     "let" -> do
       name <- SP.item pTyped
       instr <- SP.item pOpInstr
-      pure $ Lir.SomeInstr $ Lir.Assign (Cfg.nameFromText name) instr
+      pure $ instrO name instr
+    "jump" -> do
+      blockCall <- SP.item pBlockCall
+      pure $ instrC $ Lir.Jump blockCall
+    "cond_jump" -> do
+      op <- SP.item pOperand
+      blockCall1 <- SP.item pBlockCall
+      blockCall2 <- SP.item pBlockCall
+      pure $ instrC $ Lir.CondJump op blockCall1 blockCall2
     "ret" -> do
       pure $ Lir.SomeInstr $ Lir.Control Lir.Ret
     _ -> throwError (T.pack "invalid instruction")
+  where
+    instrO name = Lir.SomeInstr . Lir.Assign name
+    instrC = Lir.SomeInstr . Lir.Control
 
 pBlock :: SP.SParser (Cfg.Label, Lir.Block)
 pBlock = SP.list do
   SP.item $ SP.lit "label"
-  label <- SP.item SP.ident
+  (label, args) <- SP.item $ SP.list do
+    label <- SP.item pVar
+    args <- SP.listRest pTyped
+    pure (label, args)
   instrs <- SP.listRest pInstr
   (instrs, lastInstr) <- case initLast instrs of
     Nothing -> throwError "last instruction wasn't a control instruction"
@@ -64,7 +92,7 @@ pBlock = SP.list do
       case Cfg.sControl @c of
         Cfg.SC -> pure instr
         _ -> throwError (T.pack "the last instruction must be a control instruction")
-  pure (Cfg.Label (Cfg.nameFromText label), Cfg.Block (Lir.BlockArgs []) instrs lastInstr)
+  pure (Cfg.Label label, Cfg.Block (Lir.BlockArgs args) instrs lastInstr)
 
 pGraph :: SP.SListParser Lir.Graph
 pGraph = do
@@ -88,7 +116,7 @@ pFunction = SP.list do
     pure (name, params)
   SP.item pType
   graph <- pGraph
-  pure Lir.Function {name = name.str, params = map (.str) params, graph}
+  pure Lir.Function {name = name.str, params = params, graph}
 
 initLast :: [a] -> Maybe ([a], a)
 initLast (x : []) = Just ([], x)
