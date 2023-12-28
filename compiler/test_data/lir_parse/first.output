@@ -1,0 +1,97 @@
+Right
+  [ Function
+    { name = "my_function"
+    , params =
+      [ "first"
+      , "second"
+      ]
+    , graph = Graph
+      { start = Label
+        { name = StrName
+          ( NonDetStr
+            { getStr = "first" }
+          )
+        }
+      , blocks = fromList
+        [
+          ( Label
+            { name = StrName
+              ( NonDetStr
+                { getStr = "second" }
+              )
+            }
+          , Block
+            { entry = BlockArgs []
+            , body =
+              [ Assign
+                ( StrName
+                  ( NonDetStr
+                    { getStr = "y" }
+                  )
+                )
+                ( Add
+                  ( Var
+                    ( StrName
+                      ( NonDetStr
+                        { getStr = "x" }
+                      )
+                    )
+                  )
+                  ( Var
+                    ( StrName
+                      ( NonDetStr
+                        { getStr = "y" }
+                      )
+                    )
+                  )
+                )
+              ]
+            , exit = Control Ret
+            }
+          )
+        ,
+          ( Label
+            { name = StrName
+              ( NonDetStr
+                { getStr = "first" }
+              )
+            }
+          , Block
+            { entry = BlockArgs []
+            , body =
+              [ Assign
+                ( StrName
+                  ( NonDetStr
+                    { getStr = "y" }
+                  )
+                )
+                ( Add
+                  ( Var
+                    ( StrName
+                      ( NonDetStr
+                        { getStr = "x" }
+                      )
+                    )
+                  )
+                  ( Var
+                    ( StrName
+                      ( NonDetStr
+                        { getStr = "y" }
+                      )
+                    )
+                  )
+                )
+              ]
+            , exit = Control Ret
+            }
+          )
+        ]
+      , end = Label
+        { name = StrName
+          ( NonDetStr
+            { getStr = "second" }
+          )
+        }
+      }
+    }
+  ]

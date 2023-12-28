@@ -16,6 +16,8 @@ library
   exposed-modules:
     Zigbits
   hs-source-dirs: src
+  extra-lib-dirs:
+    {{extra-lib-dirs}}
   extra-libraries:
     zigbits
     

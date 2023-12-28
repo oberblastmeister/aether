@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.lir": "lir",
+    },
+    "[lir]": {
+        "editor.tabSize": 2
+    }
+}

@@ -20,11 +20,11 @@ traceId :: String -> String
 traceId = D.traceId
 {-# WARNING traceId "'traceId' is used" #-}
 
-pShow :: (Show a) => a -> String
-pShow = T.unpack . TL.toStrict . P.pShowOpt P.defaultOutputOptionsNoColor {P.outputOptionsIndentAmount = 2}
+pShow :: (Show a) => a -> TL.Text
+pShow = P.pShowOpt P.defaultOutputOptionsNoColor {P.outputOptionsIndentAmount = 2}
 
-pShowC :: (Show a) => a -> String
-pShowC = T.unpack . TL.toStrict . P.pShowOpt P.defaultOutputOptionsDarkBg {P.outputOptionsIndentAmount = 2}
+pShowC :: (Show a) => a -> TL.Text
+pShowC = P.pShowOpt P.defaultOutputOptionsDarkBg {P.outputOptionsIndentAmount = 2}
 
 pPrint :: (Show a) => a -> IO ()
 pPrint = P.pPrintOpt P.CheckColorTty P.defaultOutputOptionsDarkBg {P.outputOptionsIndentAmount = 2}

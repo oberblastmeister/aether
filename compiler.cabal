@@ -94,6 +94,9 @@ common common-flags
 library
   import: common-flags
   exposed-modules:
+    Sexp
+      Sexp.Syntax
+      Sexp.Parser
     Effects.Fresh
     Imports
       Imports.Optics
@@ -113,6 +116,7 @@ library
     Lir
       Lir.Ssa
       Lir.Instr
+      Lir.Sexp
       Lir.ToTree
     Cp
       Cp.Check
@@ -158,7 +162,13 @@ test-suite compiler-test
   type:             exitcode-stdio-1.0
   hs-source-dirs:   compiler/test
   main-is:          Main.hs
+  other-modules:
+    CpTest
+    SexpTest
+    LirTest
+    Snapshot
   build-depends:
     compiler,
     tasty,
     tasty-hunit,
+    tasty-golden,

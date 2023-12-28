@@ -1,39 +1,37 @@
 module Main (main) where
 
-import Cp qualified
-import Data.Function ((&))
-import System.FilePath
-import System.Process.Typed qualified as Process
+import CpTest qualified
+import Imports
+import Lir.Sexp qualified
+import LirTest qualified
+import Sexp qualified
+import Sexp.Parser qualified
+import SexpTest qualified
+import Snapshot qualified
 import Test.Tasty
-import Test.Tasty.HUnit
 
 main :: IO ()
-main = defaultMain tests
+main = do
+  lirSnapshots <-
+    Snapshot.snapshotDir
+      "compiler/test_data/lir_parse"
+      ".lir"
+      ( \t -> do
+          let sexp = Sexp.parse t ^?! _Right
+          let functions = traverse (Sexp.Parser.runParser Lir.Sexp.pFunction) sexp
+          pShow functions
+      )
+  defaultMain $
+    testGroup
+      "tests"
+      [ tests,
+        testGroup "lir" lirSnapshots
+      ]
 
-runtimePath = "compiler/test_data/test_runtime/zig-out/lib/libtest_runtime.a"
-
-compileRuntime :: IO ()
-compileRuntime = do
-  compile
-  -- Directory.doesFileExist runtimePath >>= \case
-  --   False -> compile
-  --   True -> pure ()
-  where
-    compile = do 
-      Process.runProcess_
-        ( Process.proc "zig" ["build"]
-            & Process.setWorkingDir "compiler/test_data/test_runtime"
-        )
-
-tests :: TestTree
 tests =
   testGroup
-    "cp"
-    [ ( testCase "first" do
-          runFile "first.cp"
-      )
+    "tests"
+    [ CpTest.tests,
+      SexpTest.tests,
+      LirTest.tests
     ]
-
-runFile path = do
-  compileRuntime
-  Cp.run "compiler/test_data" ("compiler/test_data" </> path) [runtimePath]

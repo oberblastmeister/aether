@@ -1,0 +1,12 @@
+(define (testing first second) u64
+    (label first
+        (first)
+        (second)
+        (third)
+        (jump second))
+    (label second
+        (first)
+        (second)
+        (third)
+        (jump first))
+    )

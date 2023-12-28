@@ -455,7 +455,7 @@ inferLiteral lit =
 checkTypeNotDuplicate :: (State' :> es) => Str -> Eff es ()
 checkTypeNotDuplicate name = do
   st <- get'
-  checkLog $ "st: " ++ pShowC st.structs
+  checkLog $ "st: " ++ (pShowC st.structs).s
   case lookupType st name of
     True -> checkError $ ("duplicate type: ".t <> name.t)
     False -> pure ()

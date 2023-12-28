@@ -17,6 +17,9 @@ module Lir.Instr
     defsTraversal,
     usesTraversal,
     _BlockArgs,
+    mkVar,
+    SomeInstr (..),
+    Function (..),
   )
 where
 
@@ -24,7 +27,15 @@ import Cfg (Control (..))
 import Cfg qualified
 import Data.Kind (Type)
 import Data.Str (Str)
+import Data.String (IsString (..))
 import Imports
+
+data Function = Function
+  { name :: Str,
+    params :: [Str],
+    graph :: Graph
+  }
+  deriving (Show, Eq)
 
 type Graph = Cfg.Graph (Instr Operand)
 
@@ -41,6 +52,7 @@ data OpInstr op
 data InstrControl op
   = Jump (BlockCall op)
   | CondJump op (BlockCall op) (BlockCall op)
+  | Ret
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
 data BlockCall op = BlockCall
@@ -53,6 +65,17 @@ data Operand
   = Const Int64
   | Var Cfg.Name
   deriving (Show, Eq)
+
+mkVar :: Text -> Operand
+mkVar = Var . Cfg.nameFromText
+
+instance IsString Operand where
+  fromString = Var . fromString
+
+data SomeInstr op where
+  SomeInstr :: (Cfg.HasSControl c) => Instr op c -> SomeInstr op
+
+deriving instance (Show op) => Show (SomeInstr op)
 
 data Instr :: Type -> Control -> Type where
   BlockArgs :: [Cfg.Name] -> Instr op E
@@ -80,6 +103,7 @@ blockCalls = traversalVL $ \f (Control instr) ->
   Control <$> case instr of
     Jump bc -> Jump <$> f bc
     CondJump op bc1 bc2 -> CondJump op <$> f bc1 <*> f bc2
+    Ret -> pure Ret
 
 instrOperands :: Traversal (Instr op c) (Instr op' c) op op'
 instrOperands = traversalVL $ \f -> \case

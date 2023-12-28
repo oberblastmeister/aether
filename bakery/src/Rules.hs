@@ -1,6 +1,8 @@
 module Rules where
 
 import Args qualified
+import Data.List qualified as List
+import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Development.Shake
@@ -18,20 +20,60 @@ ffiCabalPath = ffiDir </> "ffi.cabal"
 
 ffiCabalTemplatePath = ffiDir </> "ffi.cabal.template"
 
+compilerCabalPath = "compiler.cabal"
+
+compilerTemplatePath = "compiler.cabal.template"
+
+data TemplateVariables = TemplateVariables
+  { extraLibDirs :: [FilePath]
+  }
+
+defaultTemplateVariables :: TemplateVariables
+defaultTemplateVariables =
+  TemplateVariables
+    { extraLibDirs = []
+    }
+
+createCabalFromTemplate :: FilePath -> FilePath -> TemplateVariables -> Rules ()
+createCabalFromTemplate templatePath outputPath vars = outputPath %> \p -> do
+  need [templatePath]
+  contents <- liftIO $ T.readFile templatePath
+  path <- liftIO $ getCurrentDirectory
+  let realExtraLibDirs = (path </>) <$> vars.extraLibDirs
+  let replaced = replaceMany [(T.pack "{{extra-lib-dirs}}", T.pack (List.intercalate ", " realExtraLibDirs))] contents
+  let contents' =
+        T.intercalate
+          (T.pack "\n")
+          [ replaced,
+            T.pack "-- Do not edit! This file was generated!"
+          ]
+  liftIO $ T.writeFile outputPath contents'
+
+replaceMany :: [(Text, Text)] -> Text -> Text
+replaceMany [] !t = t
+replaceMany ((from, to) : rest) !t = replaceMany rest (T.replace from to t)
+
 rules :: (HasCallStack) => Args.Command -> Rules ()
 rules command = do
-  ffiCabalPath %> \p -> do
-    need [ffiCabalTemplatePath]
-    contents <- liftIO $ T.readFile ffiCabalTemplatePath
-    path <- liftIO $ getCurrentDirectory
-    let contents' =
-          T.intercalate
-            (T.pack "\n")
-            [ contents,
-              T.pack ("  extra-lib-dirs: " ++ (path </> ffiDir </> "zigbits/zig-out/lib")),
-              T.pack "-- Do not edit! This file was generated!"
-            ]
-    liftIO $ T.writeFile p contents'
+  createCabalFromTemplate
+    ffiCabalTemplatePath
+    ffiCabalPath
+    ( defaultTemplateVariables
+        { extraLibDirs = [ffiDir </> "zigbits/zig-out/lib"]
+        }
+    )
+  -- ffiCabalPath %> \p -> do
+  --   need [ffiCabalTemplatePath]
+  --   contents <- liftIO $ T.readFile ffiCabalTemplatePath
+  --   path <- liftIO $ getCurrentDirectory
+  --   let contents' =
+  --         T.intercalate
+  --           (T.pack "\n")
+  --           [ contents,
+  --             T.pack ("  extra-lib-dirs: " ++ (path </> ffiDir </> "zigbits/zig-out/lib")),
+  --             T.pack "-- Do not edit! This file was generated!"
+  --           ]
+  --   liftIO $ T.writeFile p contents'
 
   action case command of
     Args.Build -> do
