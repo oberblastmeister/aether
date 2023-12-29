@@ -5,6 +5,7 @@ import Lir.Elaborate qualified
 import Lir.Instr qualified
 import Lir.Instr qualified as Lir
 import Lir.Sexp
+import Lir.Ssa qualified
 import Snapshot qualified
 import Test.Tasty
 
@@ -29,19 +30,17 @@ snapshots =
               functions <- traverse Lir.Elaborate.elabFunction functions
               pure $ (fmap (Lir.Instr.runLiveness . (.graph)) functions)
           )
-    -- ssaSnap <-
-    --   testGroup "lir_ssa" <$> do
-    --     Snapshot.snapshotDir
-    --       "compiler/test_data/lir_ssa"
-    --       ".lir"
-    --       ( \t -> pShow do
-    --           functions <- Lir.Sexp.parseLir t
-    --           Lir.Ssa.toNaiveSsa functions
-    --           pure functions
-    --           -- let functions =
-    --           -- pShow functions
-    --       )
-    pure [parseSnap, livenessSnap]
+    ssaSnap <-
+      testGroup "lir_ssa" <$> do
+        Snapshot.snapshotDir
+          "compiler/test_data/lir_ssa"
+          ".lir"
+          ( \t -> pShow do
+              functions <- Lir.Sexp.parseLir t
+              functions <- traverse Lir.Elaborate.elabFunction functions
+              pure $ functions & each % #graph %~ Lir.Ssa.toNaiveSsa
+          )
+    pure [parseSnap, livenessSnap, ssaSnap]
 
 tests :: TestTree
 tests =

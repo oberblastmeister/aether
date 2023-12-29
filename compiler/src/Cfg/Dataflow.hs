@@ -12,7 +12,6 @@ where
 
 import Cfg.Graph
 import Cfg.Types
-import Data.HashMap.Strict qualified as HM
 import Data.HashSetDeque (HashSetDeque)
 import Data.HashSetDeque qualified as HashSetDeque
 import Data.Set qualified as Set

@@ -7,7 +7,6 @@ module Imports.Debug
   )
 where
 
-import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Debug.Trace qualified as D
 import Text.Pretty.Simple qualified as P

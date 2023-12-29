@@ -1,5 +1,8 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+#include "optics.h"
 
 module Lir.Ssa
   ( toSsa,
@@ -33,6 +36,11 @@ data Phi = Phi
 
 makeFieldLabelsNoPrefix ''PhiValue
 makeFieldLabelsNoPrefix ''Phi
+
+_lens_field(flowValues)
+bruh = lens (.dest) (\x dest -> (x {dest = dest} :: PhiValue))
+-- _lens_field(dest)
+-- _lens_field(label)
 
 toSsa :: Graph -> Graph
 toSsa graph = graph'

@@ -70,11 +70,12 @@ pub const Interner = struct {
             if (res) |it| {
                 break :label it;
             } else {
+                // we need to use get_or_intern instead of intern after acquiring this lock
+                // this is because another thread might have successfully interned the same string
+                // between lock.unlockShared() and lock.lock()
                 lock.lock();
                 defer lock.unlock();
-                // this is wrong because another thread might have come in and interned the string
-                // this means that the string will already exist, and intern will panic
-                break :label try self.shards[shard].intern(allocator, hash, string);
+                break :label try self.shards[shard].get_or_intern(allocator, hash, string);
             }
         };
         return .{ .len = @intCast(string.len), .shard = shard, .id = id };
@@ -98,26 +99,36 @@ const InternShard = struct {
     const Self = @This();
 
     pub const Context = struct {
+        cached_hash: u64,
+        string: []const u8,
         strings: [][]const u8,
 
+        pub fn resolve_string(self: Context, id: Id) []const u8 {
+            if (id == self.strings.len) {
+                return self.string;
+            }
+            return self.strings[id];
+        }
+
         pub fn hash(self: Context, id: Id) u64 {
+            if (id == self.strings.len) {
+                return self.cached_hash;
+            }
             return WyHash.hash(0, self.strings[id]);
         }
 
         pub fn eql(self: Context, id1: Id, id2: Id) bool {
-            return mem.eql(u8, self.strings[id1], self.strings[id2]);
+            return mem.eql(u8, self.resolve_string(id1), self.resolve_string(id2));
         }
     };
 
     pub const KeyContext = struct {
-        cached_hash: u64,
-        string: []const u8,
         context: Context,
 
         pub fn hash(self: KeyContext, string: []const u8) u64 {
             _ = string;
 
-            return self.cached_hash;
+            return self.context.cached_hash;
         }
 
         pub fn eql(self: KeyContext, string: []const u8, id: Id) bool {
@@ -125,17 +136,17 @@ const InternShard = struct {
         }
     };
 
-    pub fn context(self: *Self) Context {
+    pub fn context(self: *Self, hash: u64, string: []const u8) Context {
         return .{
+            .cached_hash = hash,
+            .string = string,
             .strings = self.strings.items,
         };
     }
 
     pub fn key_context(self: *Self, hash: u64, string: []const u8) KeyContext {
         return .{
-            .cached_hash = hash,
-            .string = string,
-            .context = self.context(),
+            .context = self.context(hash, string),
         };
     }
 
@@ -147,6 +158,26 @@ const InternShard = struct {
         return self.strings.items[id];
     }
 
+    pub fn get_or_intern(self: *Self, allocator: Allocator, hash: u64, string: []const u8) !Id {
+        const id: Id = @intCast(self.strings.items.len);
+        const res = try self.map.getOrPutContext(
+            allocator,
+            id,
+            self.context(hash, string),
+        );
+        if (res.found_existing) {
+            // we know that it must be different from our id because our id is referring to a nonexistant entry in strings
+            debug.assert(res.key_ptr.* != id);
+            return res.key_ptr.*;
+        } else {
+            debug.assert(res.key_ptr.* == id);
+            const new_string = try self.alloc(allocator, string);
+            // this makes the id we just inserted valid because it now points to this new_string
+            try self.strings.append(allocator, new_string);
+            return id;
+        }
+    }
+
     pub fn intern(self: *Self, allocator: Allocator, hash: u64, string: []const u8) !Id {
         const id: Id = @intCast(self.strings.items.len);
         const new_string = try self.alloc(allocator, string);
@@ -155,7 +186,7 @@ const InternShard = struct {
             allocator,
             new_string,
             self.key_context(hash, string),
-            self.context(),
+            self.context(hash, string),
         );
         debug.assert(!res.found_existing);
         res.key_ptr.* = id;
