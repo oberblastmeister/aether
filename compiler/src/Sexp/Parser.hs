@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Sexp.Parser
   ( Result,
     Parser,
@@ -24,22 +26,26 @@ import Data.Vector qualified as V
 import Imports
 import Sexp.Syntax
 
-newtype Result r = Result {getResult :: ReaderT Int (Either ParseError) r}
+newtype Result m r = Result {getResult :: ReaderT Int (ExceptT ParseError m) r}
   deriving (Functor, Applicative, Monad)
 
-type SParser r = Parser SexpPos r
+instance (MonadState s m) => MonadState s (Result m) where
+  get = Result get
+  put = Result . put
 
-type Parser a r = a -> Result r
+type SParser m r = Parser m SexpPos r
+
+type Parser m a r = a -> Result m r
 
 data ListEnv r = ListEnv
   { pos :: Int,
     items :: Vector r
   }
 
-newtype ListParser r a = ListParser (ReaderT (ListEnv r) (StateT Int (Either ParseError)) a)
+newtype ListParser m r a = ListParser (ReaderT (ListEnv r) (StateT Int (ExceptT ParseError m)) a)
   deriving (Functor, Applicative, Monad)
 
-type SListParser = ListParser SexpPos
+type SListParser m = ListParser m SexpPos
 
 data ParseError = ParseError Int Text
   deriving (Show, Eq)
@@ -50,31 +56,31 @@ class HasPos a where
 instance HasPos SexpPos where
   getPos = (.ann)
 
-runParser :: SParser r -> SexpPos -> Either ParseError r
-runParser m s = runReaderT (m s).getResult s.ann
+runParser :: SParser m r -> SexpPos -> m (Either ParseError r)
+runParser m s = runExceptT (runReaderT (m s).getResult s.ann)
 
-withPos :: Int -> Result r -> Result r
+withPos :: (Monad m) => Int -> Result m r -> Result m r
 withPos pos p = Result do
   local (const pos) do
     p.getResult
 
-parseError' :: Int -> Text -> Result a
+parseError' :: (Monad m) => Int -> Text -> Result m a
 parseError' pos err = Result do
   throwError $ ParseError pos err
 
-instance MonadError Text Result where
+instance (Monad m) => MonadError Text (Result m) where
   throwError err = Result do
     pos <- ask
     throwError $ ParseError pos err
   catchError = todo
 
-instance MonadError Text (ListParser r) where
+instance (Monad m) => MonadError Text (ListParser m r) where
   throwError err = ListParser do
     env <- ask
     lift $ lift $ throwError (ParseError env.pos err)
   catchError = todo
 
-parseRestUntil :: (HasPos r) => Parser r a -> ListParser r Bool -> ListParser r [a]
+parseRestUntil :: (Monad m, HasPos r) => Parser m r a -> ListParser m r Bool -> ListParser m r [a]
 parseRestUntil p cond =
   cond >>= \case
     True -> pure []
@@ -83,45 +89,49 @@ parseRestUntil p cond =
       xs <- parseRestUntil p cond
       pure $ x : xs
 
-listRest :: (HasPos r) => Parser r a -> ListParser r [a]
+listRest :: (Monad m, HasPos r) => Parser m r a -> ListParser m r [a]
 listRest p = parseRestUntil p atListEnd
 
-atListEnd :: ListParser r Bool
+atListEnd :: (Monad m) => ListParser m r Bool
 atListEnd = ListParser do
   env <- ask
   i <- get
   pure $! i >= V.length env.items
 
-assertAtListEnd :: ListParser r ()
+assertAtListEnd :: (Monad m) => ListParser m r ()
 assertAtListEnd = ListParser do
   env <- ask
   i <- get
   unless (i == V.length env.items) do
     throwError $ ParseError env.pos "did not consume the entire list".t
 
-list :: SListParser a -> SParser a
+list :: (Monad m) => SListParser m a -> SParser m a
 list m (List' pos xs) = withPos pos (runListParser m xs)
 list _ (Atom' pos _) = parseError' pos "expected list".t
 
-atom :: Parser Text a -> Parser SexpPos a
+atom :: (Monad m) => Parser m Text a -> Parser m SexpPos a
 atom p (Atom' pos t) = withPos pos (p t)
 atom _ (List' pos _) = parseError' pos "expected atom".t
 
-ident :: Parser SexpPos Text
+ident :: (Monad m) => Parser m SexpPos Text
 ident = atom pure
 
-lit :: Text -> Parser SexpPos ()
+lit :: (Monad m) => Text -> Parser m SexpPos ()
 lit t = atom \case
   t' | t == t' -> pure ()
   t' -> throwError $ "expected literal ".t <> t <> " got ".t <> t'
 
-runListParser :: ListParser r a -> Parser [r] a
+runListParser :: (Monad m) => ListParser m r a -> Parser m [r] a
 runListParser (ListParser p) sexps = Result do
   pos <- ask
   let res = evalStateT (runReaderT p (ListEnv pos (V.fromList sexps))) 0
   lift res
 
-item :: (HasPos r) => Parser r a -> ListParser r a
+-- int :: (Monad m) => Parser m Text Int
+-- int t = case T.decimal t of
+--   Right (i, "") -> pure i
+--   _ -> throwError $ "expected int got ".t <> t
+item :: (Monad m, HasPos r) => Parser m r a -> ListParser m r a
 item p = ListParser do
   env <- ask
   i <- get

@@ -2,10 +2,12 @@ module Imports.Optics
   ( module X,
     makeLenses',
     unwrapOr,
+    expect,
   )
 where
 
 import Data.Maybe (fromMaybe)
+import GHC.Stack (HasCallStack)
 import Optics as X hiding (pattern (:<), pattern (:>))
 import Optics.Operators.Unsafe as X
 
@@ -17,3 +19,7 @@ unwrapOr def =
     (fromMaybe def)
     (\_ x -> Just x)
 {-# INLINE unwrapOr #-}
+
+expect :: (HasCallStack) => String -> Maybe a -> a
+expect msg = fromMaybe (error msg)
+{-# INLINE expect #-}

@@ -4,17 +4,17 @@ import Cfg qualified
 import Imports
 import Lir.Instr qualified as Lir
 
-data Instr c
-  = Instr (Lir.Instr (Instr c) c)
-  | Operand Lir.Operand
-  deriving (Show, Eq)
+-- data Instr c
+--   = Instr (Lir.Instr (Instr c) c)
+--   | Operand Lir.Operand
+--   deriving (Show, Eq)
 
-type Graph = Cfg.Graph Instr
+-- type Graph = Cfg.Graph Instr
 
-type Block = Cfg.Block Instr
+-- type Block = Cfg.Block Instr
 
-graphToTree :: Lir.Graph -> Graph
-graphToTree = todo
+-- graphToTree :: Lir.Graph -> Graph
+-- graphToTree = todo
 
-blockToTree :: Lir.Block -> Block
-blockToTree = todo
+-- blockToTree :: Lir.Block -> Block
+-- blockToTree = todo

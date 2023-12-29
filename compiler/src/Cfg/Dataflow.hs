@@ -77,9 +77,11 @@ transferInstr transferInstr@TransferInstr {transfer = transferFn} =
       where
         newFacts =
           foldlOf'
-            blockInstructions
-            ( \prevFacts (Some instr) -> transferFn instr prevFacts
+            ( case transferInstr.direction of
+                Forward -> blockInstrsForward
+                Backward -> blockInstrsBackward
             )
+            (\prevFacts (Some instr) -> transferFn instr prevFacts)
             (transferInstr.combine otherFacts)
             block
 
@@ -116,7 +118,8 @@ runTransfer transfer graph = go initialFacts initialQueue
           currentBlock = graph.blocks ^?! ix l
           currentFact = factBase ^?! ix l
           predFacts = (\l -> factBase ^?! ix l) <$> preds
-          preds = transpose ^?! ix l
+          -- some labels may not be in transpose (for example start label)
+          preds = transpose ^. at l % unwrapOr []
           succFacts = (\l -> factBase ^?! ix l) <$> succs
           succs = jumps currentBlock.exit
       Nothing -> factBase
@@ -132,8 +135,7 @@ livenessInstrTransfer :: (LivenessConstraint i n) => TransferInstr i (Set n)
 livenessInstrTransfer =
   TransferInstr
     { transfer = \instr prevFacts ->
-        prevFacts
-          `Set.difference` (Set.fromList (defs instr))
+        (prevFacts `Set.difference` (Set.fromList (defs instr)))
           `Set.union` (Set.fromList (uses instr)),
       changed = \currentFact newFact -> Set.size newFact > Set.size currentFact,
       empty = Set.empty,

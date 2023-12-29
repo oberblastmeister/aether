@@ -72,6 +72,8 @@ pub const Interner = struct {
             } else {
                 lock.lock();
                 defer lock.unlock();
+                // this is wrong because another thread might have come in and interned the string
+                // this means that the string will already exist, and intern will panic
                 break :label try self.shards[shard].intern(allocator, hash, string);
             }
         };

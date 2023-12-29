@@ -1,0 +1,93 @@
+Right
+  [ fromList
+    [
+      ( Label
+        { name = StrName
+          ( NonDetStr
+            { getStr = "body" }
+          )
+        }
+      , fromList
+        [ Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "r" }
+            )
+          }
+        , Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "e" }
+            )
+          }
+        , Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "b" }
+            )
+          }
+        ]
+      )
+    ,
+      ( Label
+        { name = StrName
+          ( NonDetStr
+            { getStr = "loop" }
+          )
+        }
+      , fromList
+        [ Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "r" }
+            )
+          }
+        , Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "e" }
+            )
+          }
+        ]
+      )
+    ,
+      ( Label
+        { name = StrName
+          ( NonDetStr
+            { getStr = "start" }
+          )
+        }
+      , fromList
+        [ Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "e" }
+            )
+          }
+        ]
+      )
+    ,
+      ( Label
+        { name = StrName
+          ( NonDetStr
+            { getStr = "done" }
+          )
+        }
+      , fromList
+        [ Value
+          { ty = TyU64
+          , name = StrName
+            ( NonDetStr
+              { getStr = "r" }
+            )
+          }
+        ]
+      )
+    ]
+  ]

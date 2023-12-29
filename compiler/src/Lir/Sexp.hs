@@ -1,78 +1,103 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lir.Sexp where
+module Lir.Sexp (parseLir) where
 
 import Cfg qualified
 import Control.Monad.Except (MonadError (..))
+import Data.Functor.Identity
 import Data.HashMap.Strict qualified as HashMap
 import Data.Text qualified as T
+import Data.Text.Read qualified as TR
 import Imports
 import Lir.Instr qualified as Lir
 import Sexp.Parser qualified as SP
+import Sexp.Syntax qualified
 
-pType :: SP.SParser ()
-pType = SP.lit "u64"
+type SParser a = SP.SParser Identity a
 
-pTyped :: SP.SParser Cfg.Name
+type SListParser a = SP.SListParser Identity a
+
+pTy :: SParser Lir.Ty
+pTy = SP.atom \case
+  "u64" -> pure Lir.TyU64
+  "u1" -> pure Lir.TyU1
+  _ -> throwError "invalid type"
+
+pTyped :: SParser Lir.Value
 pTyped = SP.list do
   name <- SP.item pVar
-  SP.item pType
-  pure name
+  ty <- SP.item pTy
+  pure $ Lir.Value {name, ty}
 
-pVar :: SP.SParser Cfg.Name
+pVar :: SParser Cfg.Name
 pVar sexp = do
   name <- SP.ident sexp
   pure (Cfg.nameFromText name)
 
-pLabel :: SP.SParser Cfg.Label
+pLabel :: SParser Cfg.Label
 pLabel sexp = Cfg.Label <$> pVar sexp
 
-pOperand :: SP.SParser Lir.Operand
-pOperand sexp = do
-  name <- SP.ident sexp
-  pure (Lir.mkVar name)
-
-pOpInstr :: SP.SParser (Lir.OpInstr Lir.Operand)
+pOpInstr :: SParser (Lir.InstrOp Cfg.Name)
 pOpInstr = SP.list do
   name <- SP.item SP.ident
   case name of
+    "val" -> do
+      ty <- SP.item pTy
+      op <- SP.item pVar
+      pure $ Lir.Val ty op
+    "const" -> do
+      ty <- SP.item pTy
+      val <- SP.item $ SP.atom \t -> case TR.decimal t of
+        Left e -> throwError $ "could parse number: " <> e.t
+        Right (val, "") -> pure val
+        Right (_, _) -> throwError "leftover characters after parsing number"
+      pure $ Lir.Const ty val
+    "cmp" -> do
+      ty <- SP.item pTy
+      op <- SP.item $ SP.atom \case
+        "gt" -> pure Lir.CmpGt
+        _ -> throwError "invalid comparison operator"
+      op1 <- SP.item pVar
+      op2 <- SP.item pVar
+      pure $ Lir.Cmp ty op op1 op2
     "add" -> do
-      _ty <- SP.item pType
-      op1 <- SP.item pOperand
-      op2 <- SP.item pOperand
-      pure $ Lir.Add op1 op2
+      ty <- SP.item pTy
+      op1 <- SP.item pVar
+      op2 <- SP.item pVar
+      pure $ Lir.Add ty op1 op2
     _ -> throwError (T.pack "invalid instruction")
 
-pBlockCall :: SP.SParser (Lir.BlockCall Lir.Operand)
+pBlockCall :: SParser (Lir.BlockCall Cfg.Name)
 pBlockCall = SP.list do
   label <- SP.item pLabel
-  args <- SP.listRest pOperand
+  args <- SP.listRest pVar
   pure $ Lir.BlockCall label args
 
-pInstr :: SP.SParser (Lir.SomeInstr Lir.Operand)
+pInstr :: SParser (Lir.SomeInstr Cfg.Name)
 pInstr = SP.list do
   instrName <- SP.item SP.ident
   case instrName of
-    "let" -> do
-      name <- SP.item pTyped
+    "set" -> do
+      name <- SP.item pVar
       instr <- SP.item pOpInstr
       pure $ instrO name instr
     "jump" -> do
       blockCall <- SP.item pBlockCall
       pure $ instrC $ Lir.Jump blockCall
     "cond_jump" -> do
-      op <- SP.item pOperand
+      op <- SP.item pVar
       blockCall1 <- SP.item pBlockCall
       blockCall2 <- SP.item pBlockCall
       pure $ instrC $ Lir.CondJump op blockCall1 blockCall2
     "ret" -> do
-      pure $ Lir.SomeInstr $ Lir.Control Lir.Ret
+      op <- SP.item pVar
+      pure $ Lir.SomeInstr $ Lir.Control $ Lir.Ret op
     _ -> throwError (T.pack "invalid instruction")
   where
     instrO name = Lir.SomeInstr . Lir.Assign name
     instrC = Lir.SomeInstr . Lir.Control
 
-pBlock :: SP.SParser (Cfg.Label, Lir.Block)
+pBlock :: SParser (Cfg.Label, Cfg.Block (Lir.Instr Cfg.Name))
 pBlock = SP.list do
   SP.item $ SP.lit "label"
   (label, args) <- SP.item $ SP.list do
@@ -94,7 +119,7 @@ pBlock = SP.list do
         _ -> throwError (T.pack "the last instruction must be a control instruction")
   pure (Cfg.Label label, Cfg.Block (Lir.BlockArgs args) instrs lastInstr)
 
-pGraph :: SP.SListParser Lir.Graph
+pGraph :: SListParser (Cfg.Graph (Lir.Instr Cfg.Name))
 pGraph = do
   blocks <- SP.listRest pBlock
   case blocks of
@@ -107,16 +132,22 @@ pGraph = do
           }
     _ -> throwError "graph must have at least one block"
 
-pFunction :: SP.SParser Lir.Function
+pFunction :: SParser (Lir.Function Cfg.Name)
 pFunction = SP.list do
   SP.item $ SP.lit "define"
   (name, params) <- SP.item $ SP.list do
     name <- SP.item SP.ident
     params <- SP.listRest pTyped
     pure (name, params)
-  SP.item pType
+  returnTy <- SP.item pTy
   graph <- pGraph
-  pure Lir.Function {name = name.str, params = params, graph}
+  pure Lir.Function {name = name.str, params = params, returnTy, graph}
+
+parseLir :: Text -> Either Text [Lir.Function Cfg.Name]
+parseLir t = do
+  sexp <- Sexp.Syntax.parse t
+  let res = traverse (runIdentity . SP.runParser pFunction) sexp
+  res & _Left %~ (T.pack . show)
 
 initLast :: [a] -> Maybe ([a], a)
 initLast (x : []) = Just ([], x)

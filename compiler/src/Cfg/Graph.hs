@@ -11,18 +11,22 @@ module Cfg.Graph
     Control (..),
     SControl (..),
     HasSControl (..),
-    blockInstructions,
+    blockInstrsForward,
     graphPrecessors,
     traverseBlock,
     mapBlock,
     singletonGraph,
+    blockInstrsBackward,
   )
 where
 
 import Cfg.Types
+import Cfg.Types qualified as Cfg
 import Data.Functor.Identity (Identity (..))
 import Data.HashMap.Strict qualified as HM
 import Data.Kind qualified as Kind
+import Data.List qualified as List
+import Data.Map.Strict qualified as Map
 import Data.Some (Some (..))
 import Imports
 
@@ -67,10 +71,21 @@ traverseBlock f block = do
   exit <- f block.exit
   pure Block {entry, body, exit}
 
-blockInstructions :: Fold (Block i) (Some i)
-blockInstructions = foldVL go
+blockInstrsForward :: Fold (Block i) (Some i)
+blockInstrsForward = foldVL go
   where
-    go f block = f (Some (block.entry)) *> traverse_ (f . Some) block.body *> f (Some block.exit)
+    go f block =
+      f (Some (block.entry))
+        *> traverse_ (f . Some) block.body
+        *> f (Some block.exit)
+
+blockInstrsBackward :: Fold (Block i) (Some i)
+blockInstrsBackward = foldVL go
+  where
+    go f block =
+      f (Some block.exit)
+        *> traverse_ (f . Some) (reverse block.body)
+        *> f (Some (block.entry))
 
 type LabelMap = HashMap Label
 
@@ -80,7 +95,17 @@ data Graph i = Graph
     end :: Label
   }
 
-deriving instance (InstrConstraint Show i) => Show (Graph i)
+instance (InstrConstraint Show i) => Show (Graph i) where
+  show graph =
+    "Graph { start = "
+      <> show (graph.start)
+      <> ", blocks = "
+      <> show (List.sortBy (Cfg.compareLabel `on` fst) $ HM.toList graph.blocks)
+      <> ", end = "
+      <> show (graph.end)
+      <> "}"
+
+-- deriving instance (InstrConstraint Show i) => Show (Graph i)
 
 deriving instance (InstrConstraint Eq i) => Eq (Graph i)
 

@@ -2,24 +2,27 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Lir.Instr
-  ( OpInstr (..),
+  ( InstrOp (..),
     InstrControl (..),
     BlockCall (..),
-    Operand (..),
+    Value (..),
+    CmpOp (..),
     Instr (..),
     Graph,
     Block,
+    Ty (..),
     pattern (:=),
-    instrOperands,
-    operandNames,
+    instrUses,
     runLiveness,
     blockCalls,
-    defsTraversal,
-    usesTraversal,
+    instrDefs,
     _BlockArgs,
-    mkVar,
     SomeInstr (..),
     Function (..),
+    compareValue,
+    getOpInstrTy,
+    opInstrUses,
+    controlInstrUses,
   )
 where
 
@@ -27,112 +30,138 @@ import Cfg (Control (..))
 import Cfg qualified
 import Data.Kind (Type)
 import Data.Str (Str)
-import Data.String (IsString (..))
 import Imports
 
-data Function = Function
+data Function v = Function
   { name :: Str,
-    params :: [Cfg.Name],
-    graph :: Graph
+    params :: [Value],
+    returnTy :: Ty,
+    graph :: Cfg.Graph (Instr v)
   }
   deriving (Show, Eq)
 
-type Graph = Cfg.Graph (Instr Operand)
+type Graph = Cfg.Graph (Instr Value)
 
-type Block = Cfg.Block (Instr Operand)
+type Block = Cfg.Block (Instr Value)
 
-data OpInstr op
-  = Add op op
-  | Sub op op
-  | Mul op op
-  | Div op op
-  | Call Str [op]
+data Ty = TyU1 | TyU64
+  deriving (Show, Eq)
+
+data CmpOp
+  = CmpGt
+  deriving (Show, Eq)
+
+data InstrOp v
+  = Add Ty v v
+  | Sub Ty v v
+  | Call Ty Str [v]
+  | Const Ty Int64
+  | Cmp Ty CmpOp v v
+  | Val Ty v
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
-data InstrControl op
-  = Jump (BlockCall op)
-  | CondJump op (BlockCall op) (BlockCall op)
-  | Ret
+data InstrControl v
+  = Jump (BlockCall v)
+  | CondJump v (BlockCall v) (BlockCall v)
+  | Ret v
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
-data BlockCall op = BlockCall
+data BlockCall v = BlockCall
   { label :: Cfg.Label,
-    args :: [op]
+    args :: [v]
   }
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
-data Operand
-  = Const Int64
-  | Var Cfg.Name
-  deriving (Show, Eq)
+data Value = Value {ty :: Ty, name :: Cfg.Name}
+  deriving (Show)
 
-mkVar :: Text -> Operand
-mkVar = Var . Cfg.nameFromText
+instance Eq Value where
+  (==) = (==) `on` (.name)
 
-instance IsString Operand where
-  fromString = Var . fromString
+instance Hashable Value where
+  hashWithSalt salt = hashWithSalt salt . (.name)
 
-data SomeInstr op where
-  SomeInstr :: (Cfg.HasSControl c) => Instr op c -> SomeInstr op
+instance Ord Value where
+  compare = compare `on` (.name)
+
+getOpInstrTy :: InstrOp v -> Ty
+getOpInstrTy = \case
+  Add ty _ _ -> ty
+  Sub ty _ _ -> ty
+  Call ty _ _ -> ty
+  Cmp ty _ _ _ -> ty
+  Const ty _ -> ty
+  Val ty _ -> ty
+
+compareValue :: Value -> Value -> Ordering
+compareValue = compare `on` (\o -> Cfg.nameStr o.name)
+
+-- mkVar :: Text -> Operand
+-- mkVar = Var . Cfg.nameFromText
+
+-- instance IsString Operand where
+--   fromString = Var . fromString
+
+data SomeInstr v where
+  SomeInstr :: (Cfg.HasSControl c) => Instr v c -> SomeInstr v
 
 deriving instance (Show op) => Show (SomeInstr op)
 
 data Instr :: Type -> Control -> Type where
-  BlockArgs :: [Cfg.Name] -> Instr op E
-  Assign :: Cfg.Name -> OpInstr op -> Instr op O
-  Control :: InstrControl op -> Instr op C
+  BlockArgs :: [Value] -> Instr v E
+  Assign :: v -> InstrOp v -> Instr v O
+  Control :: InstrControl v -> Instr v C
 
 deriving instance (Show op) => Show (Instr op c)
 
 deriving instance (Eq op) => Eq (Instr op c)
 
-pattern (:=) :: Cfg.Name -> (OpInstr op) -> Instr op O
+pattern (:=) :: op -> (InstrOp op) -> Instr op O
 pattern name := instr = Assign name instr
 
 {-# COMPLETE (:=) #-}
 
-makePrismLabels ''Operand
+makeFieldLabelsNoPrefix ''Function
+makeFieldLabelsNoPrefix ''Value
 makeFieldLabelsNoPrefix ''BlockCall
 
-_BlockArgs :: Traversal' (Instr op E) [Cfg.Name]
+_BlockArgs :: Traversal' (Instr v E) [Value]
 _BlockArgs = traversalVL $ \f -> \case
   BlockArgs names -> BlockArgs <$> f names
 
-blockCalls :: Traversal' (Instr op C) (BlockCall op)
+blockCalls :: Traversal' (Instr v C) (BlockCall v)
 blockCalls = traversalVL $ \f (Control instr) ->
   Control <$> case instr of
     Jump bc -> Jump <$> f bc
     CondJump op bc1 bc2 -> CondJump op <$> f bc1 <*> f bc2
-    Ret -> pure Ret
+    Ret x -> pure $ Ret x
 
-instrOperands :: Traversal (Instr op c) (Instr op' c) op op'
-instrOperands = traversalVL $ \f -> \case
+opInstrUses :: Traversal (InstrOp v) (InstrOp v') v v'
+opInstrUses = traversalVL traverse
+
+controlInstrUses :: Traversal (InstrControl v) (InstrControl v') v v'
+controlInstrUses = traversalVL traverse
+
+instrUses :: Traversal' (Instr v c) v
+instrUses = traversalVL $ \f -> \case
   BlockArgs names -> pure $ BlockArgs names
-  Assign name instr -> Assign name <$> traverse f instr
+  Assign name instr -> Assign <$> pure name <*> traverse f instr
   Control instr -> Control <$> traverse f instr
 
-operandNames :: Traversal' Operand Cfg.Name
-operandNames = traversalVL $ \f -> \case
-  Var name -> Var <$> f name
-  Const n -> pure (Const n)
-
-defsTraversal :: Traversal' (Instr op c) Cfg.Name
-defsTraversal = traversalVL $ \f -> \case
+instrDefs :: Traversal' (Instr Value c) Value
+instrDefs = traversalVL $ \f -> \case
   BlockArgs names -> BlockArgs <$> traverse f names
-  Assign name instr -> Assign <$> f name <*> pure instr
+  Assign val instr -> Assign <$> f val <*> pure instr
   other -> pure other
 
-usesTraversal :: Traversal' (Instr Operand c) Cfg.Name
-usesTraversal = instrOperands % operandNames
+instance Cfg.HasDefs (Instr Value op) Value where
+  defs = (^.. instrDefs)
 
-instance Cfg.HasDefs (Instr c op) Cfg.Name where
-  defs = (^.. defsTraversal)
+instance Cfg.HasUses (Instr Value c) Value where
+  uses = (^.. instrUses)
 
-instance Cfg.HasUses (Instr Operand c) Cfg.Name where
-  uses = (^.. usesTraversal)
-
-instance Cfg.HasJumps (Instr op C) where
+instance Cfg.HasJumps (Instr v C) where
   jumps = (^.. blockCalls % to (.label))
 
-runLiveness :: Graph -> Cfg.LabelMap (Set Cfg.Name)
+runLiveness :: Graph -> Cfg.LabelMap (Set Value)
 runLiveness = Cfg.runTransfer Cfg.livenessTransfer

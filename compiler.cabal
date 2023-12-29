@@ -117,6 +117,7 @@ library
       Lir.Ssa
       Lir.Instr
       Lir.Sexp
+      Lir.Elaborate
       Lir.ToTree
     Cp
       Cp.Check

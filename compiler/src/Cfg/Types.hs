@@ -9,6 +9,8 @@ module Cfg.Types
     nameStr,
     compareName,
     nameFromText,
+    nameText,
+    compareLabel,
   )
 where
 
@@ -33,6 +35,9 @@ compareName = compare `on` by
     by (StrName str) = Left str.getStr
     by (GenName str i) = Right (str.getStr, i)
 
+nameText :: Name -> Text
+nameText = (.t) . (.getStr) . nameStr
+
 nameStr :: Name -> NonDetStr
 nameStr (StrName str) = str
 nameStr (GenName str _) = str
@@ -47,6 +52,9 @@ class HasUses a n | a -> n where
 
 newtype Label = Label {name :: Name}
   deriving (Show, Eq, Hashable, IsString)
+
+compareLabel :: Label -> Label -> Ordering
+compareLabel = compare `on` (nameText . (.name))
 
 class HasJumps a where
   jumps :: a -> [Label]
