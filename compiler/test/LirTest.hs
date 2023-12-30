@@ -1,9 +1,10 @@
 module LirTest where
 
+import Data.Text qualified as T
 import Imports
 import Lir.Elaborate qualified
 import Lir.Instr qualified
-import Lir.Instr qualified as Lir
+import Lir.Pretty qualified
 import Lir.Sexp
 import Lir.Ssa qualified
 import Snapshot qualified
@@ -35,10 +36,22 @@ snapshots =
         Snapshot.snapshotDir
           "compiler/test_data/lir_ssa"
           ".lir"
-          ( \t -> pShow do
-              functions <- Lir.Sexp.parseLir t
-              functions <- traverse Lir.Elaborate.elabFunction functions
-              pure $ functions & each % #graph %~ Lir.Ssa.toNaiveSsa
+          ( \t ->
+              let res = do
+                    functions <- Lir.Sexp.parseLir t
+                    functions <- traverse Lir.Elaborate.elabFunction functions
+                    let naiveSsaFunctions = functions & each %~ Lir.Ssa.toNaiveSsa
+                    let ssaFunctions = functions & each %~ Lir.Ssa.toSsa
+                    pure
+                      ( T.intercalate
+                          "\n\n".t
+                          ( (Lir.Pretty.functionToText <$> naiveSsaFunctions)
+                              ++ (Lir.Pretty.functionToText <$> ssaFunctions)
+                          )
+                      )
+               in case res of
+                    Left e -> ("error: ".t <> e).tl
+                    Right r -> r.tl
           )
     pure [parseSnap, livenessSnap, ssaSnap]
 

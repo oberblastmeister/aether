@@ -6,41 +6,33 @@ module Cfg.Types
     HasUses (..),
     HasDefs (..),
     Label (..),
-    nameStr,
-    compareName,
     nameFromText,
-    nameText,
     compareLabel,
+    showName,
   )
 where
 
-import Data.Str (NonDetStr (..))
+import Data.NonDet.Class (NonDetOrd)
+import Data.Str (Str)
 import Data.String (IsString (..))
 import Imports
 
 data Name
-  = StrName NonDetStr
-  | GenName NonDetStr Int
+  = StrName {str :: Str}
+  | GenName {str :: Str, gen :: Int}
   deriving (Show, Eq, Ord, Generic)
+
+instance NonDetOrd Name
 
 instance IsString Name where
   fromString = nameFromText . fromString
 
+showName :: Name -> Text
+showName (StrName s) = s.t
+showName (GenName s i) = s.t <> ".".t <> (show i).t
+
 nameFromText :: Text -> Name
-nameFromText = StrName . NonDetStr . (.str)
-
-compareName :: Name -> Name -> Ordering
-compareName = compare `on` by
-  where
-    by (StrName str) = Left str.getStr
-    by (GenName str i) = Right (str.getStr, i)
-
-nameText :: Name -> Text
-nameText = (.t) . (.getStr) . nameStr
-
-nameStr :: Name -> NonDetStr
-nameStr (StrName str) = str
-nameStr (GenName str _) = str
+nameFromText = StrName . (.str)
 
 instance Hashable Name
 
@@ -51,10 +43,10 @@ class HasUses a n | a -> n where
   uses :: a -> [n]
 
 newtype Label = Label {name :: Name}
-  deriving (Show, Eq, Hashable, IsString)
+  deriving (Show, Eq, Ord, NonDetOrd, Hashable, IsString)
 
 compareLabel :: Label -> Label -> Ordering
-compareLabel = compare `on` (nameText . (.name))
+compareLabel = compare `on` (.name.str.t)
 
 class HasJumps a where
   jumps :: a -> [Label]

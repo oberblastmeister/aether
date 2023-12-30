@@ -1,16 +1,81 @@
-module Sexp.Syntax where
+module Sexp.Syntax
+  ( Ann (..),
+    SexpP,
+    pattern AnnP,
+    pattern AtomP,
+    pattern ListP,
+    pattern Atom',
+    pattern List',
+    pattern Atom,
+    pattern List,
+    Fix (..),
+    With (..),
+    SexpF (..),
+    pretty,
+    prettyText,
+    toText,
+    toBuilder,
+    parse,
+    _Atom',
+    _List',
+    _Atom,
+    _List,
+    tokenize,
+    SexpPos,
+    Sexp,
+  )
+where
 
 import Data.Char qualified as C
+import Data.Functor.Compose
 import Data.List qualified as List
 import Data.String (IsString (..))
 import Data.Text qualified as T
 import Data.Text.Builder.Linear qualified as TB
+import GHC.Records (HasField (..))
 import Imports
+import Prettyprinter ((<+>))
+import Prettyprinter qualified as P
+import Prettyprinter.Render.Text qualified as P.Render.Text
 
-data Sexp' a
-  = Atom' {ann :: a, text :: Text}
-  | List' {ann :: a, items :: [Sexp' a]}
+data SexpF a
+  = AtomF Text
+  | ListF [a]
   deriving (Show, Eq, Generic, Functor, Foldable, Traversable)
+
+data Ann
+  = Line
+  | IndentLine
+
+type SexpP = Fix (Compose (Either Ann) SexpF)
+
+pattern AtomP :: Text -> SexpP
+pattern AtomP t = In (Compose (Right (AtomF t)))
+
+pattern ListP :: [SexpP] -> SexpP
+pattern ListP xs = In (Compose (Right (ListF xs)))
+
+pattern AnnP :: Ann -> SexpP
+pattern AnnP a = In (Compose (Left a))
+
+{-# COMPLETE AtomP, ListP, AnnP #-}
+
+instance IsString SexpP where
+  fromString = AtomP . fromString
+
+newtype Fix f = In {unFix :: (f (Fix f))}
+
+data With a x = With {ann :: a, value :: x}
+
+type Sexp' a = Fix (Compose (With a) SexpF)
+
+pattern Atom' :: a -> Text -> Sexp' a
+pattern Atom' a t = In (Compose (With a (AtomF t)))
+
+pattern List' :: a -> [Sexp' a] -> Sexp' a
+pattern List' a xs = In (Compose (With a (ListF xs)))
+
+{-# COMPLETE Atom', List' #-}
 
 pattern Atom :: Text -> Sexp
 pattern Atom t = Atom' () t
@@ -19,6 +84,10 @@ pattern List :: [Sexp] -> Sexp
 pattern List xs = List' () xs
 
 {-# COMPLETE Atom, List #-}
+
+instance HasField "ann" (Sexp' a) a where
+  getField (Atom' ann _) = ann
+  getField (List' ann _) = ann
 
 type Sexp = Sexp' ()
 
@@ -108,3 +177,25 @@ parse' = pManySexp
           (TokenPos _ RParen) : ts -> pure (List' pos sexps, ts)
           _ -> Left "missing close paren".t
       _ -> error "need lparen"
+
+type Doc = P.Doc Void
+
+prettyText :: SexpP -> Text
+prettyText = P.Render.Text.renderStrict . P.layoutPretty P.defaultLayoutOptions . pretty
+
+pretty :: SexpP -> Doc
+pretty (AnnP _) = mempty
+pretty (AtomP t) = P.pretty t
+pretty (ListP xs) = P.parens (prettyList xs)
+
+prettyAnn :: Ann -> Doc -> Doc
+prettyAnn ann doc = case ann of
+  Line -> P.line <> doc
+  IndentLine -> P.nest 2 (P.line <> doc)
+
+prettyList :: [SexpP] -> Doc
+prettyList (AnnP ann : xs) = prettyAnn ann (prettyList xs)
+prettyList (x : AnnP ann : xs) = pretty x <> prettyAnn ann (prettyList xs)
+prettyList (x : []) = pretty x
+prettyList (x : xs) = pretty x <+> prettyList xs
+prettyList [] = mempty

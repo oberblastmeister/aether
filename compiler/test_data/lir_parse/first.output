@@ -3,86 +3,64 @@ Right
     { name = "my_function"
     , params =
       [ Value
-        { ty = TyU64
-        , name = StrName
-          ( NonDetStr
-            { getStr = "first" }
-          )
+        { name = StrName
+          { str = "first" }
+        , ty = TyU64
         }
       , Value
-        { ty = TyU64
-        , name = StrName
-          ( NonDetStr
-            { getStr = "second" }
-          )
+        { name = StrName
+          { str = "second" }
+        , ty = TyU64
         }
       ]
     , returnTy = TyU64
     , graph = Graph
       { start = Label
         { name = StrName
-          ( NonDetStr
-            { getStr = "first" }
-          )
+          { str = "first" }
         }
       , blocks =
         [
           ( Label
             { name = StrName
-              ( NonDetStr
-                { getStr = "first" }
-              )
+              { str = "first" }
             }
           , Block
             { entry = BlockArgs []
             , body =
               [ Assign
                 ( StrName
-                  ( NonDetStr
-                    { getStr = "y" }
-                  )
+                  { str = "y" }
                 )
                 ( Add TyU64
                   ( StrName
-                    ( NonDetStr
-                      { getStr = "x" }
-                    )
+                    { str = "x" }
                   )
                   ( StrName
-                    ( NonDetStr
-                      { getStr = "y" }
-                    )
+                    { str = "y" }
                   )
                 )
               ]
             , exit = Control
               ( CondJump
                 ( StrName
-                  ( NonDetStr
-                    { getStr = "y" }
-                  )
+                  { str = "y" }
                 )
                 ( BlockCall
                   { label = Label
                     { name = StrName
-                      ( NonDetStr
-                        { getStr = "first" }
-                      )
+                      { str = "first" }
                     }
                   , args =
                     [ StrName
-                      ( NonDetStr
-                        { getStr = "y" }
-                      )
+                      { str = "y" }
                     ]
                   }
                 )
                 ( BlockCall
                   { label = Label
                     { name = StrName
-                      ( NonDetStr
-                        { getStr = "third" }
-                      )
+                      { str = "third" }
                     }
                   , args = []
                   }
@@ -93,29 +71,21 @@ Right
         ,
           ( Label
             { name = StrName
-              ( NonDetStr
-                { getStr = "second" }
-              )
+              { str = "second" }
             }
           , Block
             { entry = BlockArgs []
             , body =
               [ Assign
                 ( StrName
-                  ( NonDetStr
-                    { getStr = "y" }
-                  )
+                  { str = "y" }
                 )
                 ( Add TyU64
                   ( StrName
-                    ( NonDetStr
-                      { getStr = "x" }
-                    )
+                    { str = "x" }
                   )
                   ( StrName
-                    ( NonDetStr
-                      { getStr = "y" }
-                    )
+                    { str = "y" }
                   )
                 )
               ]
@@ -124,15 +94,11 @@ Right
                 ( BlockCall
                   { label = Label
                     { name = StrName
-                      ( NonDetStr
-                        { getStr = "first" }
-                      )
+                      { str = "first" }
                     }
                   , args =
                     [ StrName
-                      ( NonDetStr
-                        { getStr = "y" }
-                      )
+                      { str = "y" }
                     ]
                   }
                 )
@@ -142,9 +108,7 @@ Right
         ,
           ( Label
             { name = StrName
-              ( NonDetStr
-                { getStr = "third" }
-              )
+              { str = "third" }
             }
           , Block
             { entry = BlockArgs []
@@ -152,9 +116,7 @@ Right
             , exit = Control
               ( Ret
                 ( StrName
-                  ( NonDetStr
-                    { getStr = "y" }
-                  )
+                  { str = "y" }
                 )
               )
             }
@@ -162,9 +124,7 @@ Right
         ]
       , end = Label
         { name = StrName
-          ( NonDetStr
-            { getStr = "third" }
-          )
+          { str = "third" }
         }
       }
     }

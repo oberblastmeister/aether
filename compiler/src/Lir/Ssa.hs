@@ -1,8 +1,5 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
-
-#include "optics.h"
 
 module Lir.Ssa
   ( toSsa,
@@ -13,7 +10,8 @@ where
 import Cfg qualified
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
-import Data.Str (NonDetStr (..))
+import Data.NonDet.Set qualified as NDSet
+import Data.Str (Str)
 import Effectful
 import Effectful.Reader.Static
 import Effectful.State.Static.Local
@@ -22,33 +20,35 @@ import Lir.Instr
 import Lir.Instr qualified as Lir
 
 data PhiValue = PhiValue
-  { label :: Cfg.Label,
+  { -- the label where this value is passed in to a blockcall
+    flowedFromLabel :: Cfg.Label,
     dest :: Value,
     value :: Value
   }
+  deriving (Show)
 
 data Phi = Phi
-  { label :: Cfg.Label,
+  { -- the label of the block argument for this phi
+    destLabel :: Cfg.Label,
     dest :: Value,
     -- should be nonempty
     flowValues :: [PhiValue]
   }
+  deriving (Show)
 
 makeFieldLabelsNoPrefix ''PhiValue
 makeFieldLabelsNoPrefix ''Phi
 
-_lens_field(flowValues)
-bruh = lens (.dest) (\x dest -> (x {dest = dest} :: PhiValue))
--- _lens_field(dest)
--- _lens_field(label)
-
-toSsa :: Graph -> Graph
-toSsa graph = graph'
+toSsa :: Function Value -> Function Value
+toSsa fn = naiveSsaFn {graph = graph'}
   where
-    graph' = substGraph subst naiveSsaGraph & putPhis simplifiedPhis
+    graph' =
+      putPhis (substPhi subst <$> simplifiedPhis) naiveSsaFn.graph
+        & substGraph subst
+    -- invariant: the domain of the substitution should be a subseteq of the phi destinations
     (subst, simplifiedPhis) = simplifyPhis phis
-    phis = getPhis naiveSsaGraph ^.. folded % folded
-    naiveSsaGraph = toNaiveSsa graph
+    phis = getPhis naiveSsaFn.graph ^.. folded % folded
+    naiveSsaFn = toNaiveSsa fn
 
 isPhiRemovable :: Phi -> Maybe PhiSubst
 isPhiRemovable phi = do
@@ -64,24 +64,25 @@ allSame (x : xs) = all (== x) xs
 
 type PhiSubst = (HashMap Value Value)
 
--- does not substitute entry or exit, because we will replace them anyway with putPhis
 substGraph :: PhiSubst -> Graph -> Graph
-substGraph subst graph = graph & #blocks % each % #body % each %~ substInstr subst
+substGraph subst graph = graph & #blocks % each %~ (Cfg.mapBlock (substInstr subst))
 
 substInstr :: PhiSubst -> Instr Value c -> Instr Value c
-substInstr subst instr = instr & Lir.instrUses %~ substOperand subst
+substInstr subst instr = instr & Lir.instrUses %~ substValue subst
 
-substOperand :: PhiSubst -> Value -> Value
-substOperand subst val = case subst ^. at val of
+substValue :: PhiSubst -> Value -> Value
+substValue subst val = case subst ^. at val of
   Nothing -> val
   Just newVal -> newVal
 
 substPhi :: PhiSubst -> Phi -> Phi
-substPhi subst phi = phi & #flowValues % each % #value %~ substOperand subst
+substPhi subst phi = phi & #flowValues % each % #value %~ substValue subst
 
 composeSubst :: PhiSubst -> PhiSubst -> PhiSubst
-composeSubst s1 s2 = (substOperand s1) <$> s2
+composeSubst s1 s2 = s1 <> (fmap (substValue s1) s2)
 
+-- this is basically just unification
+-- might be better to use a mutable union-find data structure
 simplifyPhis :: [Phi] -> (PhiSubst, [Phi])
 simplifyPhis = fixpoint mempty
   where
@@ -92,9 +93,13 @@ simplifyPhis = fixpoint mempty
 
     tryRemove :: PhiSubst -> [Phi] -> (Bool, PhiSubst, [Phi])
     tryRemove !subst [] = (False, subst, [])
-    tryRemove !subst (phi : phis) = case isPhiRemovable (substPhi subst phi) of
-      Nothing -> tryRemove subst phis & _3' %!~ (phi :)
-      Just subst' -> (True, composeSubst subst' subst, phis)
+    tryRemove !subst (phi : phis) =
+      case isPhiRemovable (substPhi subst phi) of
+        Nothing ->
+          tryRemove subst phis & _3' %!~ (phi :)
+        Just subst' ->
+          (True, composeSubst subst' subst, phis)
+      where
 
 putPhis :: [Phi] -> Graph -> Graph
 putPhis phis graph = graph'
@@ -103,67 +108,102 @@ putPhis phis graph = graph'
     putPhisBlock :: Cfg.Label -> Block -> Block
     putPhisBlock label block = block & #entry .~ BlockArgs blockArgs & #exit % blockCalls %!~ modifyBlockCall
       where
-        modifyBlockCall blockCall = blockCall & #args .~ (grouped ^?! ix blockCall.label % ix label)
-        blockArgs = blockArgsMap ^?! ix label
+        modifyBlockCall blockCall = blockCall & #args .~ callArgs
+          where
+            callArgs = case grouped ^. at blockCall.label of
+              Nothing -> []
+              Just flowedFromLabelToValues -> flowedFromLabelToValues ^. at label % unwrapOr (error "should be called at least once because we only inserted phis for live values")
+        -- there may not be any phis at the label, which means it should have empty arguments
+        blockArgs = blockArgsMap ^. at label % non []
+
     -- mapping from label jumped to label jumped from to operands for block args
-    grouped = (fmap . fmap) (fmap (.value) . List.sortBy (Cfg.compareName `on` (\typed -> typed.dest.name))) $ HM.fromListWith (HM.unionWith (++)) do
+    -- first label checks if there are block arguments
+    -- if there are, lookup through the second label should not fail
+    grouped = (fmap . fmap) (fmap (.value) . List.sortOn (.dest)) $ HM.fromListWith (HM.unionWith (++)) do
       phi <- phis
       value <- phi.flowValues
-      pure (phi.label, HM.fromList [(value.label, [value])])
+      pure (phi.destLabel, HM.fromList [(value.flowedFromLabel, [value])])
+
     blockArgsMap :: HashMap Cfg.Label [Value]
     blockArgsMap =
-      fmap (List.sortBy (Cfg.compareName `on` (.name))) $ HM.fromListWith (++) do
+      fmap List.sort $ HM.fromListWith (++) do
         phi <- phis
-        pure (phi.label, [phi.dest])
+        pure (phi.destLabel, [phi.dest])
 
 getPhis :: Graph -> Cfg.LabelMap [Phi]
 getPhis graph = res
   where
-    res = foldlOf' (#blocks % each % #exit % blockCalls) go initialPhis graph
-    go :: Cfg.LabelMap [Phi] -> Lir.BlockCall Value -> Cfg.LabelMap [Phi]
-    go blockPhis blockCall =
-      blockPhis
-        & at blockCall.label
-        %~ (Just . \m -> addPhis blockCall.label (m ^?! _Just) blockCall.args)
-    addPhis :: Cfg.Label -> [Phi] -> [Value] -> [Phi]
-    addPhis label = zipWith (\phi value -> phi & #flowValues %~ (PhiValue {label, dest = phi.dest, value} :))
-    initialPhis = graph.blocks & itraversed `iover'` makePhis
-      where
-        makePhis label block =
-          block.entry
-            ^.. _BlockArgs
-            % each
-            <&> (\arg -> Phi {label, dest = arg, flowValues = []})
+    res = ifoldlOf' (#blocks % each % #exit % blockCalls) accumulatePhis initialPhis graph
 
-toNaiveSsa :: Graph -> Graph
-toNaiveSsa graph = renamedGraph
+    accumulatePhis :: Cfg.Label -> Cfg.LabelMap [Phi] -> Lir.BlockCall Value -> Cfg.LabelMap [Phi]
+    accumulatePhis flowedFromLabel blockPhis blockCall =
+      blockPhis
+        & at destLabel
+        %~ (Just . \m -> zipPhisWithValues flowedFromLabel (m ^?! _Just) blockCall.args)
+      where
+        destLabel = blockCall.label
+
+    -- for a block arg like (label (my_block arg1 arg2))
+    --
+    -- if we call it like this:
+    -- (jump (my_block val1 val2))
+    --
+    -- we will call zipPhisWithValues "my_block" [phi [...], phi [...]] [val1, val2]
+    -- which will add val1 to the first phi's [...] and add val2 to the second phi's [...]
+    zipPhisWithValues :: Cfg.Label -> [Phi] -> [Value] -> [Phi]
+    zipPhisWithValues flowedFromLabel = zipWith \phi value ->
+      phi & #flowValues %~ (PhiValue {flowedFromLabel, dest = phi.dest, value} :)
+
+    -- for a block arg like (label (my_block arg1 arg2))
+    -- creates phis:
+    -- arg1 <- phi []
+    -- arg2 <- phi []
+    -- we will accumulate the flowValues above
+    initialPhis = graph.blocks & itraversed `iover'` emptyPhiForEachBlockArg
+      where
+        emptyPhiForEachBlockArg destLabel block = block.entry ^.. _BlockArgs % each <&> emptyPhiForBlockArg
+          where
+            emptyPhiForBlockArg arg = Phi {destLabel, dest = arg, flowValues = []}
+
+toNaiveSsa :: Function Value -> Function Value
+toNaiveSsa fn = renamedFn
   where
     livenessFacts = runLiveness graph
+    livenessFactsList = NDSet.toListOrd <$> livenessFacts
     addBlockArgsStuff :: Cfg.Label -> Block -> Block
     addBlockArgsStuff label block = block {Cfg.entry, Cfg.exit}
       where
-        live =
-          (livenessFacts ^?! ix label)
-            ^.. folded
-            & List.sortBy compareValue
-        entry = BlockArgs (live ^.. folded)
-        exit = block.exit & blockCalls %~ (\bc -> bc {args = live})
+        entry =
+          BlockArgs
+            ( if label == graph.start
+                then []
+                else (livenessFactsList ^?! ix label)
+            )
+        exit = block.exit & blockCalls %~ (\blockCall -> blockCall {args = livenessFactsList ^?! ix (blockCall.label)})
     graphWithBlockArgs = graph & #blocks % itraversed `iover'` addBlockArgsStuff
-    renamedGraph = renameGraph livenessFacts graphWithBlockArgs
+    renamedFn =
+      runPureEff
+        . runReader @Liveness livenessFacts
+        . evalState @RenameState mempty
+        $ do
+          params <- traverse renameValueDef fn.params
+          graph <- renameGraph graphWithBlockArgs
+          pure $ fn {params, graph}
+    graph = fn.graph
 
 -- mapping from name to generation
-type RenameState = HashMap NonDetStr Int
+type RenameState = HashMap Str Int
 
-type Liveness = (Cfg.LabelMap (Set Value))
+type Liveness = (Cfg.LabelMap (NDSet.Set Value))
 
 type E es = (Reader Liveness :> es, State RenameState :> es)
 
-renameGraph :: Liveness -> Graph -> Graph
-renameGraph livenessFacts graph =
-  traverseOf (#blocks % traversed) renameBlock graph
-    & evalState @RenameState mempty
-    & runReader @Liveness livenessFacts
-    & runPureEff
+renameGraph :: (E es) => Graph -> Eff es Graph
+renameGraph graph =
+  -- the order is important!
+  -- we need to make sure that the start block sees the renames
+  -- we performed on the parameters
+  Cfg.traverseBlockOrderM (const renameBlock) graph
 
 renameBlock :: (E es) => Block -> Eff es Block
 renameBlock block = do
@@ -178,14 +218,20 @@ rename = renameUses >=> renameDefs
 renameUses :: (E es) => Instr Value c -> Eff es (Instr Value c)
 renameUses instr = do
   forOf instrUses instr \val -> do
-    let str = Cfg.nameStr val.name
+    let str = showName val.name
     gen <- gets @RenameState (^?! ix str)
     pure $ val & #name .~ Cfg.GenName str gen
 
 renameDefs :: (E es) => Instr Value c -> Eff es (Instr Value c)
-renameDefs instr = do
-  forOf instrDefs instr \val -> do
-    let str = Cfg.nameStr val.name
-    gen <- gets @RenameState (^. at str % unwrapOr 0)
-    modify @RenameState (at str ?~ gen + 1)
-    pure $ val & #name .~ Cfg.GenName str gen
+renameDefs instr = forOf instrDefs instr renameValueDef
+
+renameValueDef :: (E es) => Value -> Eff es Value
+renameValueDef val = do
+  let str = showName val.name
+  modify @RenameState (at str %~ (Just . (+ 1) . fromMaybe (-1)))
+  gen <- gets @RenameState (^. at str % unwrapOr 0)
+  pure $ val & #name .~ Cfg.GenName str gen
+
+showName :: Cfg.Name -> Str
+showName (Cfg.StrName {str}) = str
+showName (Cfg.GenName {str, gen}) = (str.t <> ".".t <> (show gen).t).str

@@ -17,16 +17,17 @@ module Cfg.Graph
     mapBlock,
     singletonGraph,
     blockInstrsBackward,
+    traverseBlockOrderM,
   )
 where
 
 import Cfg.Types
 import Cfg.Types qualified as Cfg
+import Data.Foldable (foldlM)
 import Data.Functor.Identity (Identity (..))
 import Data.HashMap.Strict qualified as HM
 import Data.Kind qualified as Kind
 import Data.List qualified as List
-import Data.Map.Strict qualified as Map
 import Data.Some (Some (..))
 import Imports
 
@@ -90,8 +91,12 @@ blockInstrsBackward = foldVL go
 type LabelMap = HashMap Label
 
 data Graph i = Graph
-  { start :: Label,
+  { -- invariant: the block with this label cannot be jumped to
+    -- also must not have any block arguments
+    start :: Label,
     blocks :: HashMap Label (Block i),
+    -- currently we have only one exit label, but might need to support more (tail calls)
+    -- invariant: the block with this label must have no jumps
     end :: Label
   }
 
@@ -105,12 +110,28 @@ instance (InstrConstraint Show i) => Show (Graph i) where
       <> show (graph.end)
       <> "}"
 
--- deriving instance (InstrConstraint Show i) => Show (Graph i)
-
 deriving instance (InstrConstraint Eq i) => Eq (Graph i)
 
 makeFieldLabelsNoPrefix ''Graph
 makeFieldLabelsNoPrefix ''Block
+
+mapHashMapWithOrderM :: (Hashable k, Monad m) => [k] -> (k -> a -> m a) -> HashMap k a -> m (HashMap k a)
+mapHashMapWithOrderM order f hm = do
+  foldlM
+    ( \hm k -> do
+        let v = HM.lookupDefault (error "mapHashMapWithOrderM: key not found") k hm
+        v' <- f k v
+        pure $! HM.insert k v' hm
+    )
+    hm
+    order
+
+traverseBlockOrderM :: (Monad f) => (Label -> Block i -> f (Block i)) -> Graph i -> f (Graph i)
+traverseBlockOrderM f graph = do
+  blocks <- traverseOf (ix graph.start) (f graph.start) graph.blocks
+  blocks <- mapHashMapWithOrderM (List.sort . filter (\l -> l /= graph.start && l /= graph.end) . HM.keys $ graph.blocks) (f) blocks
+  blocks <- traverseOf (ix graph.end) (f graph.end) blocks
+  pure graph {blocks}
 
 singletonGraph :: Label -> Block i -> Graph i
 singletonGraph label block =
@@ -128,7 +149,3 @@ graphPrecessors graph =
       | (from, block) <- itoListOf each graph.blocks,
         to <- jumps block.exit
     ]
-
-data Testing = Testing {_thingy :: Int, bruh :: Int}
-
-makeLensesWith underscoreFields ''Testing

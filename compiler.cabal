@@ -68,10 +68,12 @@ common common-flags
     text >= 2.1,
     hashable,
     filepath >= 1.4.100.4,
+    random,
     temporary,
     directory,
     bytestring,
     vector,
+    deepseq,
     mtl,
     containers,
     unordered-containers,
@@ -114,6 +116,7 @@ library
     Lir
       Lir.Ssa
       Lir.Instr
+      Lir.Pretty
       Lir.Sexp
       Lir.Elaborate
       Lir.ToTree
@@ -130,6 +133,9 @@ library
     Data.BitSet
     Data.Intern
     Data.TextUtils
+    Data.NonDet.Class
+    Data.NonDet.Set
+    Data.NonDet.Map
     Data.Str
     Data.Deque
     Data.HashSetDeque
@@ -171,3 +177,13 @@ test-suite compiler-test
     tasty,
     tasty-hunit,
     tasty-golden,
+
+benchmark compiler-bench
+  import: common-flags
+  type: exitcode-stdio-1.0
+  hs-source-dirs: compiler/bench/
+  main-is: Main.hs
+  ghc-options: -O2
+  build-depends:
+    compiler,
+    tasty-bench,

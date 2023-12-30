@@ -19,7 +19,6 @@ module Lir.Instr
     _BlockArgs,
     SomeInstr (..),
     Function (..),
-    compareValue,
     getOpInstrTy,
     opInstrUses,
     controlInstrUses,
@@ -29,6 +28,8 @@ where
 import Cfg (Control (..))
 import Cfg qualified
 import Data.Kind (Type)
+import Data.NonDet.Class (NonDetOrd (..))
+import Data.NonDet.Set qualified as NDSet
 import Data.Str (Str)
 import Imports
 
@@ -72,7 +73,10 @@ data BlockCall v = BlockCall
   }
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
-data Value = Value {ty :: Ty, name :: Cfg.Name}
+data Value = Value
+  { name :: Cfg.Name,
+    ty :: Ty
+  }
   deriving (Show)
 
 instance Eq Value where
@@ -84,6 +88,9 @@ instance Hashable Value where
 instance Ord Value where
   compare = compare `on` (.name)
 
+instance NonDetOrd Value where
+  nonDetCompare = nonDetCompare `on` (.name)
+
 getOpInstrTy :: InstrOp v -> Ty
 getOpInstrTy = \case
   Add ty _ _ -> ty
@@ -92,15 +99,6 @@ getOpInstrTy = \case
   Cmp ty _ _ _ -> ty
   Const ty _ -> ty
   Val ty _ -> ty
-
-compareValue :: Value -> Value -> Ordering
-compareValue = compare `on` (\o -> Cfg.nameStr o.name)
-
--- mkVar :: Text -> Operand
--- mkVar = Var . Cfg.nameFromText
-
--- instance IsString Operand where
---   fromString = Var . fromString
 
 data SomeInstr v where
   SomeInstr :: (Cfg.HasSControl c) => Instr v c -> SomeInstr v
@@ -163,5 +161,5 @@ instance Cfg.HasUses (Instr Value c) Value where
 instance Cfg.HasJumps (Instr v C) where
   jumps = (^.. blockCalls % to (.label))
 
-runLiveness :: Graph -> Cfg.LabelMap (Set Value)
+runLiveness :: Graph -> Cfg.LabelMap (NDSet.Set Value)
 runLiveness = Cfg.runTransfer Cfg.livenessTransfer

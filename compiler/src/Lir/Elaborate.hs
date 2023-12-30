@@ -7,6 +7,7 @@ import Cfg qualified
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.HashMap.Strict qualified as HM
+import Data.List.NonEmpty qualified as NE
 import Data.Some (Some (..))
 import Imports
 import Lir.Instr qualified as Lir
@@ -18,12 +19,22 @@ type M = ExceptT Text (Reader TyMap)
 collectTypes :: Lir.Function Cfg.Name -> Either Text TyMap
 collectTypes fn = res
   where
-    res = itraverseOf each findRep nameToTyList
+    res = itraverseOf each findRep nameToTyListWithFnParams
 
     findRep :: Cfg.Name -> NonEmpty Lir.Ty -> Either Text Lir.Ty
     findRep name (ty :| tys) = case all (== ty) tys of
       True -> pure ty
-      False -> Left $ "types do not match for variable ".t <> Cfg.nameText name
+      False -> Left $ "types do not match for variable ".t <> name.str.t
+
+    nameToTyListWithFnParams = foldl' addTy nameToTyList fn.params
+      where
+        addTy (nameToTyList :: HashMap Cfg.Name (NonEmpty Lir.Ty)) value =
+          nameToTyList
+            & at value.name
+            %~ ( Just . \case
+                   Nothing -> value.ty :| []
+                   Just tys -> value.ty `NE.cons` tys
+               )
 
     nameToTyList =
       HM.fromListWith (<>) $
@@ -49,7 +60,7 @@ lookupTy name = do
   tyMap <- ask
   case tyMap ^. at name of
     Just ty -> pure ty
-    Nothing -> throwError $ "could not find variable ".t <> Cfg.nameText name
+    Nothing -> throwError $ "could not find variable ".t <> name.str.t
 
 elabBlock :: Cfg.Block (Lir.Instr Cfg.Name) -> M (Cfg.Block (Lir.Instr Lir.Value))
 elabBlock block = Cfg.traverseBlock elabInstr block

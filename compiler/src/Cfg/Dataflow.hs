@@ -7,6 +7,7 @@ module Cfg.Dataflow
     runTransfer,
     livenessTransfer,
     livenessInstrTransfer,
+    dominatorsTransfer,
   )
 where
 
@@ -14,7 +15,8 @@ import Cfg.Graph
 import Cfg.Types
 import Data.HashSetDeque (HashSetDeque)
 import Data.HashSetDeque qualified as HashSetDeque
-import Data.Set qualified as Set
+import Data.NonDet.Class (NonDetOrd)
+import Data.NonDet.Set qualified as NDSet
 import Data.Some (Some (..))
 import Imports
 
@@ -27,6 +29,8 @@ data Transfer i d = Transfer
     -- it is enough to compare the sizes of the current fact and the new fact to
     -- determine if the new fact has changed this is because the transfer function is monotone
     transfer ::
+      -- label of block
+      Label ->
       -- current block
       Block i ->
       -- predecessor/successor facts
@@ -54,9 +58,9 @@ data TransferInstr i d = TransferInstr
       -- new fact
       d ->
       Bool,
-    -- empty fact, lattice bottom or top
+    -- empty fact
     empty :: d,
-    -- combine facts, lattice join or meet operator
+    -- combine facts from the predecessors or successors
     combine :: [d] -> d,
     direction :: Direction
   }
@@ -69,7 +73,7 @@ transferInstr transferInstr@TransferInstr {transfer = transferFn} =
       direction = transferInstr.direction
     }
   where
-    transfer block otherFacts currentFact =
+    transfer _label block otherFacts currentFact =
       if transferInstr.changed currentFact newFacts
         then Just newFacts
         else Nothing
@@ -86,6 +90,10 @@ transferInstr transferInstr@TransferInstr {transfer = transferFn} =
 
 data Direction = Forward | Backward
 
+-- this is more of a database saturation algorithm
+-- facts for predecessors/successors are always computed first in a bfs manner
+-- most of the classical algorithms do a fixpoint algorithm with some fixed traversal
+-- (reverse post order, etc.)
 runTransfer :: forall i d. (HasJumps (i C)) => Transfer i d -> Graph i -> LabelMap d
 runTransfer transfer graph = go initialFacts initialQueue
   where
@@ -96,8 +104,8 @@ runTransfer transfer graph = go initialFacts initialQueue
     transpose = graphPrecessors graph
     go :: LabelMap d -> HashSetDeque Label -> LabelMap d
     go !factBase !queue = case HashSetDeque.uncons queue of
-      Just (l, queue) -> case maybeNewFacts of
-        Just newFact -> go (factBase & at' l ?~ newFact) newQueue
+      Just (label, queue) -> case maybeNewFacts of
+        Just newFact -> go (factBase & at' label ?~ newFact) newQueue
         Nothing -> do
           -- the facts for this label didn't change, so don't add its successors/predecessors to the queue
           go factBase queue
@@ -110,35 +118,57 @@ runTransfer transfer graph = go initialFacts initialQueue
                   Forward -> succs
                   Backward -> preds
               )
-          maybeNewFacts = transfer.transfer currentBlock otherFacts currentFact
+          maybeNewFacts = transfer.transfer label currentBlock otherFacts currentFact
           otherFacts = case transfer.direction of
             Forward -> predFacts
             Backward -> succFacts
-          currentBlock = graph.blocks ^?! ix l
-          currentFact = factBase ^?! ix l
+          currentBlock = graph.blocks ^?! ix label
+          currentFact = factBase ^?! ix label
           predFacts = (\l -> factBase ^?! ix l) <$> preds
           -- some labels may not be in transpose (for example start label)
-          preds = transpose ^. at l % unwrapOr []
+          preds = transpose ^. at label % unwrapOr []
           succFacts = (\l -> factBase ^?! ix l) <$> succs
           succs = jumps currentBlock.exit
       Nothing -> factBase
-{-# INLINEABLE runTransfer #-}
 
-type LivenessConstraint i n = (Ord n, forall c. HasDefs (i c) n, forall c. HasUses (i c) n)
+type LivenessConstraint i n = (NonDetOrd n, forall c. HasDefs (i c) n, forall c. HasUses (i c) n)
 
-livenessTransfer :: (LivenessConstraint i n) => Transfer i (Set n)
+livenessTransfer :: (LivenessConstraint i n) => Transfer i (NDSet.Set n)
 livenessTransfer = transferInstr livenessInstrTransfer
 {-# INLINEABLE livenessTransfer #-}
 
-livenessInstrTransfer :: (LivenessConstraint i n) => TransferInstr i (Set n)
+livenessInstrTransfer :: (LivenessConstraint i n) => TransferInstr i (NDSet.Set n)
 livenessInstrTransfer =
   TransferInstr
     { transfer = \instr prevFacts ->
-        (prevFacts `Set.difference` (Set.fromList (defs instr)))
-          `Set.union` (Set.fromList (uses instr)),
-      changed = \currentFact newFact -> Set.size newFact > Set.size currentFact,
-      empty = Set.empty,
-      combine = Set.unions,
+        (prevFacts `NDSet.difference` (NDSet.fromList (defs instr)))
+          `NDSet.union` (NDSet.fromList (uses instr)),
+      changed = \currentFact newFact -> NDSet.size newFact > NDSet.size currentFact,
+      empty = NDSet.empty,
+      combine = NDSet.unions,
       direction = Backward
     }
 {-# INLINEABLE livenessInstrTransfer #-}
+
+-- computes the labels that dominate a given label
+-- probably need to invert if we want the domtree
+dominatorsTransfer :: Transfer i (NDSet.Set Label)
+dominatorsTransfer =
+  Transfer
+    { transfer,
+      -- only works because we avoid intersections with empty set
+      -- as all the predecessor facts are non-empty as they are calculated already
+      -- normally has to be initialized with all the labels if using a lattice like algorithm
+      empty = NDSet.empty,
+      direction = Forward
+    }
+  where
+    transfer label _block predFacts currFact =
+      if NDSet.size newFact > NDSet.size currFact
+        then Just newFact
+        else Nothing
+      where
+        -- newFact is always nonempty, because we insert at the end
+        newFact = NDSet.insert label (intersections predFacts)
+        intersections (set : sets) = foldl' NDSet.intersection set sets
+        intersections [] = NDSet.empty

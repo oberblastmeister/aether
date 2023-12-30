@@ -2,13 +2,15 @@
 
 module Data.Str
   ( Str,
-    NonDetStr (..),
     getText,
+    compareContents,
   )
 where
 
+import Control.DeepSeq (NFData (..))
 import Data.ByteString.Short qualified as BS
 import Data.Intern
+import Data.NonDet.Class (NonDetOrd (..))
 import Data.String (IsString (..))
 import Data.Text qualified as T
 import Data.TextUtils qualified as TextUtils
@@ -16,13 +18,6 @@ import Data.ToInt (ToInt (..))
 import Data.Word
 import GHC.Records (HasField (..))
 import Imports
-
-newtype NonDetStr = NonDetStr {getStr :: Str}
-  deriving (Show, Eq, Hashable)
-
-instance Ord NonDetStr where
-  compare (NonDetStr (Str w)) (NonDetStr (Str w')) = compare w w'
-  {-# INLINE compare #-}
 
 instance HasField "str" Text Str where
   getField = fromString . T.unpack
@@ -40,30 +35,47 @@ instance HasField "s" Str String where
   getField = T.unpack . getText
   {-# INLINE getField #-}
 
-newtype Str = Str Word64
+newtype Str = UnsafeStr Word64
+
+instance NFData Str where
+  rnf (UnsafeStr w) = w `seq` ()
+  {-# INLINE rnf #-}
+
+instance NonDetOrd Str where
+  nonDetCompare (UnsafeStr w) (UnsafeStr w') = compare w w'
+  {-# INLINE nonDetCompare #-}
 
 instance Ord Str where
-  compare = compare `on` getText
+  compare (UnsafeStr s1) (UnsafeStr s2) =
+    if s1 == s2
+      then EQ
+      else
+        compare (getSymbolLength s1) (getSymbolLength s2)
+          <> unsafeCompareSymbol s1 s2
   {-# INLINE compare #-}
+
+compareContents :: Str -> Str -> Ordering
+compareContents (UnsafeStr s1) (UnsafeStr s2) = unsafeCompareSymbol s1 s2
+{-# INLINE compareContents #-}
 
 instance Show Str where
   show = show . getText
   {-# INLINE show #-}
 
 instance Eq Str where
-  (Str w) == (Str w') = w == w'
+  (UnsafeStr w) == (UnsafeStr w') = w == w'
   {-# INLINE (==) #-}
 
 instance ToInt Str where
-  toInt (Str w) = fromIntegral w
+  toInt (UnsafeStr w) = fromIntegral w
   {-# INLINE toInt #-}
 
 instance Hashable Str where
-  hashWithSalt salt (Str w) = hashWithSalt salt w
+  hashWithSalt salt (UnsafeStr w) = hashWithSalt salt w
   {-# INLINE hashWithSalt #-}
 
 instance IsString Str where
-  fromString s = Str (internByteArray bs off len)
+  fromString s = UnsafeStr (unsafeInternByteArray bs off len)
     where
       (TextUtils.UnsafeTextSlice bs off len) = T.pack s
   {-# INLINE fromString #-}
@@ -77,5 +89,5 @@ toShort = BS.toShort . toBS
 {-# INLINE toShort #-}
 
 toBS :: Str -> ByteString
-toBS (Str w) = unsafeResolveByteString w
+toBS (UnsafeStr w) = unsafeResolveByteString w
 {-# INLINE toBS #-}

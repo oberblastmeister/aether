@@ -1,4 +1,3 @@
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE RoleAnnotations #-}
 
 module Data.IdMap
@@ -13,6 +12,7 @@ module Data.IdMap
   )
 where
 
+import Control.DeepSeq (NFData)
 import Data.Coerce (Coercible, coerce)
 import Data.IntMap.Strict qualified as IntMap
 import Data.ToInt
@@ -21,7 +21,7 @@ import Imports
 type role IdMap nominal representational
 
 newtype IdMap k v = IdMap {unEnumMap :: IntMap v}
-  deriving (Show, Eq, Ord, Generic, Hashable, Functor, Foldable, Traversable)
+  deriving (Show, Eq, Ord, Generic, Hashable, Functor, Foldable, Traversable, NFData)
 
 mapIso :: Iso' (IdMap k v) (IntMap v)
 mapIso = coerced
@@ -38,10 +38,6 @@ instance (ToInt k) => Ixed (IdMap k v) where
 instance (ToInt k) => At (IdMap k v) where
   at i = mapIso % at (toInt i)
   {-# INLINE at #-}
-  
--- instance FoldableWithIndex k (IdMap k) where
---   ifoldMap f = ifoldMap f . unEnumMap
---   {-# INLINE ifoldMap #-}
 
 fromList :: forall k v. (ToInt k) => [(k, v)] -> IdMap k v
 fromList = coerce (IntMap.fromList :: [(Int, v)] -> IntMap v) . map (first toInt)

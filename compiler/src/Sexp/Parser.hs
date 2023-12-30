@@ -127,10 +127,6 @@ runListParser (ListParser p) sexps = Result do
   let res = evalStateT (runReaderT p (ListEnv pos (V.fromList sexps))) 0
   lift res
 
--- int :: (Monad m) => Parser m Text Int
--- int t = case T.decimal t of
---   Right (i, "") -> pure i
---   _ -> throwError $ "expected int got ".t <> t
 item :: (Monad m, HasPos r) => Parser m r a -> ListParser m r a
 item p = ListParser do
   env <- ask

@@ -14,6 +14,8 @@ ffiDir = "compiler/ffi"
 
 buildFfi :: Action ()
 buildFfi = do
+  -- TODO: even if we rebuild the zigbits, the ffi package will not rebuild
+  -- you have to clean dist-newstyle and rebuild everything
   cmd_ (Cwd (ffiDir </> "zigbits")) "zig build"
 
 ffiCabalPath = ffiDir </> "ffi.cabal"

@@ -6,6 +6,7 @@ const debug = std.debug;
 const Lazy = @import("lazy.zig").Lazy;
 const math = std.math;
 const Thread = std.Thread;
+const mem = std.mem;
 
 fn init() intern.Interner {
     if (intern.Interner.init(std.heap.c_allocator)) |res| {
@@ -19,6 +20,17 @@ var interner: Lazy(intern.Interner, init) = .{};
 
 export fn zig_intern_resolve(symbol: u64) [*]const u8 {
     return interner.get().resolve(@bitCast(symbol)).ptr;
+}
+
+export fn zig_intern_compare(symbol1: u64, symbol2: u64) i8 {
+    const i = interner.get();
+    const s1 = i.resolve(@bitCast(symbol1));
+    const s2 = i.resolve(@bitCast(symbol2));
+    return switch (mem.order(u8, s1, s2)) {
+        .lt => -1,
+        .eq => 0,
+        .gt => 1,
+    };
 }
 
 export fn zig_intern_bytestring(str: [*]u8, offset: usize, len: usize) u64 {

@@ -3,91 +3,105 @@ Right
     [
       ( Label
         { name = StrName
-          ( NonDetStr
-            { getStr = "body" }
-          )
+          { str = "body" }
         }
-      , fromList
-        [ Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "r" }
-            )
-          }
-        , Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "e" }
-            )
-          }
-        , Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "b" }
-            )
-          }
-        ]
+      , Set
+        { getSet = fromList
+          [ NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "r" }
+              , ty = TyU64
+              }
+            }
+          , NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "e" }
+              , ty = TyU64
+              }
+            }
+          , NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "b" }
+              , ty = TyU64
+              }
+            }
+          ]
+        }
       )
     ,
       ( Label
         { name = StrName
-          ( NonDetStr
-            { getStr = "loop" }
-          )
+          { str = "loop" }
         }
-      , fromList
-        [ Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "r" }
-            )
-          }
-        , Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "e" }
-            )
-          }
-        ]
+      , Set
+        { getSet = fromList
+          [ NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "r" }
+              , ty = TyU64
+              }
+            }
+          , NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "e" }
+              , ty = TyU64
+              }
+            }
+          , NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "b" }
+              , ty = TyU64
+              }
+            }
+          ]
+        }
       )
     ,
       ( Label
         { name = StrName
-          ( NonDetStr
-            { getStr = "start" }
-          )
+          { str = "start" }
         }
-      , fromList
-        [ Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "e" }
-            )
-          }
-        ]
+      , Set
+        { getSet = fromList
+          [ NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "e" }
+              , ty = TyU64
+              }
+            }
+          , NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "b" }
+              , ty = TyU64
+              }
+            }
+          ]
+        }
       )
     ,
       ( Label
         { name = StrName
-          ( NonDetStr
-            { getStr = "done" }
-          )
+          { str = "done" }
         }
-      , fromList
-        [ Value
-          { ty = TyU64
-          , name = StrName
-            ( NonDetStr
-              { getStr = "r" }
-            )
-          }
-        ]
+      , Set
+        { getSet = fromList
+          [ NonDet
+            { getNonDet = Value
+              { name = StrName
+                { str = "r" }
+              , ty = TyU64
+              }
+            }
+          ]
+        }
       )
     ]
   ]
